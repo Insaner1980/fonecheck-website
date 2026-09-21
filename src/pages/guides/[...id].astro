@@ -1,0 +1,19 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Arrow from '../../components/Arrow.astro';
+export async function getStaticPaths() {
+  const guides = await getCollection('guides', ({ data }) => !data.draft);
+  return guides.map(guide => ({ params: { id: guide.id }, props: { guide } }));
+}
+const { guide } = Astro.props;
+const { Content, headings } = await render(guide);
+const date = guide.data.published.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const minutes = Math.max(1, Math.ceil((guide.body ?? '').split(/\s+/).length / 220));
+---
+<Base title={`${guide.data.title} — fonecheck`} description={guide.data.description}>
+  <div class="container">
+    <header class="page-header article-header"><a class="eyebrow text-link" href="/guides/">← All guides</a><h1>{guide.data.title}</h1><p class="lead">{guide.data.description}</p><div class="article-meta mono"><span>{guide.data.category}</span><time datetime={guide.data.published.toISOString()}>{date}</time><span>{minutes} min read</span></div></header>
+    <div class="article-layout"><aside class="article-toc" aria-label="In this guide"><p class="mono">In this guide</p><ol>{headings.filter(heading => heading.depth === 2).map(heading => <li><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol></aside><article class="prose"><Content /><aside class="article-cta"><h2>Get to know your phone.</h2><p>Explore the Android app behind these guides. Coming to Google Play in fall 2026.</p><a class="button button-orange" href="/#explore">Meet fonecheck <Arrow /></a></aside></article></div>
+  </div>
+</Base>

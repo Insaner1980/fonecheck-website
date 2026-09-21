@@ -1,0 +1,55 @@
+---
+import '@fontsource-variable/dm-sans';
+import '@fontsource/jetbrains-mono/latin-400.css';
+import '../styles/global.css';
+import Arrow from '../components/Arrow.astro';
+interface Props { title: string; description: string; dark?: boolean; noindex?: boolean; }
+const { title, description, dark = false, noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#242d29" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="fonecheck" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL('/social.png', Astro.site)} />
+    <meta property="og:image:alt" content="fonecheck. Get to know your phone. Inside out. Coming fall 2026." />
+    <meta name="twitter:card" content="summary_large_image" />
+    {noindex && <meta name="robots" content="noindex" />}
+  </head>
+  <body class:list={[{ 'dark-top': dark }]}>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container nav-bar">
+        <a class="wordmark" href="/" aria-label="fonecheck home">fonecheck<span aria-hidden="true" class="brand-mark">↗</span></a>
+        <nav aria-label="Main navigation">
+          <a href="/#explore">The app</a>
+          <a href="/#pricing">Pricing</a>
+          <a href="/guides/" aria-current={Astro.url.pathname.startsWith('/guides') ? 'page' : undefined}>Guides</a>
+          <a href="/#faq">FAQ</a>
+        </nav>
+        <a class="header-cta" href="/#explore">Meet your phone <Arrow diagonal /></a>
+      </div>
+    </header>
+    <main id="main"><slot /></main>
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-top">
+          <div><a class="wordmark" href="/">fonecheck<span aria-hidden="true" class="brand-mark">↗</span></a><p>A closer look at the phone in your pocket.</p></div>
+          <div class="footer-links"><a href="/guides/">Guides</a><a href="/support/">Support</a><a href="/privacy/">Privacy</a><a href="mailto:contact@finnvek.com">Get in touch <Arrow diagonal /></a></div>
+        </div>
+        <div class="footer-bottom"><span>© {new Date().getFullYear()} Finnvek</span><span>Made for Android. Coming fall 2026.</span><a href="#main">Back to top ↑</a></div>
+      </div>
+    </footer>
+  </body>
+</html>

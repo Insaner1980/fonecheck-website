@@ -1,0 +1,53 @@
+---
+import Phone from './Phone.astro';
+import display from '../assets/display.png';
+import battery from '../assets/battery.png';
+import camera from '../assets/camera.png';
+import audio from '../assets/audio.png';
+import report from '../assets/report.png';
+const previews = [
+  { id: 'display', label: 'Display', image: display, title: 'Every pixel. Every touch.', description: 'Look for display issues with guided colour checks, then work across a touch grid to see how the screen responds.', note: 'Included in the free version', alt: 'fonecheck Display screen with brightness, screen information, pixel inspection and touch test controls.' },
+  { id: 'battery', label: 'Battery', image: battery, title: 'See what powers your day.', description: 'Explore charge level, temperature and charging information. Clear context helps you understand what Android can tell you about your battery.', note: 'Included in the free version', alt: 'fonecheck Battery screen showing 27 percent charge, voltage, temperature and charging information.' },
+  { id: 'camera', label: 'Camera', image: camera, title: 'Put the camera in focus.', description: 'Open a preview, take a test photo and explore the camera features your phone supports. A hands-on look beyond the spec sheet.', note: 'Included in the full version', alt: 'fonecheck Camera screen with front and rear camera tests, torch test and camera specifications.' },
+  { id: 'audio', label: 'Audio', image: audio, title: 'Hear it for yourself.', description: 'Try speaker tones and stereo channels, then record and play back a microphone sample. You confirm what you hear.', note: 'Included in the full version', alt: 'fonecheck Audio screen with speaker tones, stereo channels and microphone test controls.' },
+  { id: 'report', label: 'Your report', image: report, title: 'The findings, in one place.', description: 'Review what passed, what needs attention and what was not tested. Your score and coverage stay separate, with the detail behind each observation.', note: 'Included in the full version', alt: 'Example fonecheck report with a score of 93 out of 100 and partial coverage of 84 percent.' },
+];
+---
+<section class="section explorer-section" id="explore" aria-labelledby="explore-title">
+  <div class="container">
+    <div class="section-heading"><div><p class="eyebrow">01 / A closer look</p><h2 id="explore-title">A little curiosity.<br />A lot more clarity.</h2></div><p>Your phone has a lot to tell you.<br />Here’s how fonecheck helps you listen.</p></div>
+    <div class="explorer" data-explorer>
+      <div class="preview-choices" aria-label="Choose an app preview">
+        {previews.map((preview, index) => <a class:list={['preview-choice', { 'is-active': index === 0 }]} href={`#preview-${preview.id}`} data-preview={preview.id} aria-controls={`preview-${preview.id}`}><span class="mono">0{index + 1}</span>{preview.label}<span aria-hidden="true">↗</span></a>)}
+      </div>
+      <div class="preview-panels">
+        {previews.map(preview => <div class="preview-panel" id={`preview-${preview.id}`} data-panel={preview.id}>
+          <div class="preview-copy"><span class="feature-tag mono">{preview.note}</span><h3>{preview.title}</h3><p>{preview.description}</p><p class="preview-disclaimer">App preview. Available information and tests vary by device.</p></div>
+          <figure class="preview-phone"><Phone image={preview.image} alt={preview.alt} /><figcaption><a href={preview.image.src} target="_blank" rel="noopener" aria-label={`View the full ${preview.label.toLowerCase()} screenshot in a new tab`}>View full app screen <span aria-hidden="true">↗</span></a></figcaption></figure>
+        </div>)}
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  const explorer = document.querySelector<HTMLElement>('[data-explorer]');
+  if (explorer) {
+    const choices = Array.from(explorer.querySelectorAll<HTMLAnchorElement>('[data-preview]'));
+    const panels = Array.from(explorer.querySelectorAll<HTMLElement>('[data-panel]'));
+    const activate = (id: string) => {
+      choices.forEach(choice => {
+        const selected = choice.dataset.preview === id;
+        choice.classList.toggle('is-active', selected);
+        if (selected) choice.setAttribute('aria-current', 'true');
+        else choice.removeAttribute('aria-current');
+      });
+      panels.forEach(panel => { panel.hidden = panel.dataset.panel !== id; });
+    };
+    const initial = choices.find(choice => choice.hash === window.location.hash);
+    activate(initial?.dataset.preview ?? 'display');
+    choices.forEach(choice => choice.addEventListener('click', event => {
+      event.preventDefault();
+      activate(choice.dataset.preview!);
+    }));
+  }
+</script>

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.astro/
+.sonar/
+.playwright-cli/
+output/
+.env
+.env.*
+!.env.example

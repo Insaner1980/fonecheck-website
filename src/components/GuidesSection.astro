@@ -1,0 +1,116 @@
+---
+import { getCollection } from 'astro:content';
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+
+const allGuides = (await getCollection('guides', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.order - b.data.order);
+// The front page shows the first seven: one large and two rows of three.
+// The rest are on /guides/, linked below the cards.
+const guides = allGuides.slice(0, 7);
+
+// Same illustrations as the /guides/ cards: src/assets/guides/<slug>.webp
+const art = import.meta.glob<{ default: ImageMetadata }>('../assets/guides/*.webp', { eager: true });
+const artFor = (id: string) => art[`../assets/guides/${id}.webp`]?.default;
+---
+<section class="guides" id="guides" aria-labelledby="guides-title">
+  <header class="head">
+    <div>
+      <h2 data-mask id="guides-title">What to check, and what it means.</h2>
+      <p class="intro">Free guides for when something on your phone seems wrong. Each one takes a single symptom and walks through what to check.</p>
+    </div>
+    <a class="all" href="/guides/">See all {allGuides.length} guides</a>
+  </header>
+
+  <ol class="cards" role="list" data-reveal="stagger">
+    {guides.map((guide, i) => (
+      <li class:list={{ feature: i === 0 }}>
+        <a href={`/guides/${guide.id}/`}>
+          {artFor(guide.id)
+            ? <Image class="art" src={artFor(guide.id)!} alt="" widths={i === 0 ? [440, 880] : [200, 400]} sizes={i === 0 ? '(max-width: 1100px) 45vw, 440px' : '(max-width: 620px) 45vw, 200px'} loading="lazy" />
+            : <span class="art" aria-hidden="true"></span>}
+          <span class="cat">{guide.data.category}</span>
+          <span class="title">{guide.data.title}</span>
+          {i === 0 && <span class="excerpt">{guide.data.description}</span>}
+        </a>
+      </li>
+    ))}
+  </ol>
+
+</section>
+
+<style>
+  .guides {
+    background: var(--mount);
+    color: var(--bg);
+    border: 3px solid var(--edge);
+    border-top: 0;
+    padding: clamp(44px, 6vw, 88px) 30px clamp(40px, 5vw, 72px);
+  }
+  h2 { margin: 0; font-size: clamp(30px, 3.6vw, 52px); font-weight: 500; letter-spacing: -.04em; line-height: 1.04; max-width: 17ch; }
+  .intro { margin: 18px 0 0; max-width: 52ch; font-size: 16px; line-height: 1.6; opacity: .82; text-wrap: pretty; }
+
+  /* Header: heading and intro on the left, the link to all guides on the right. */
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px 48px; flex-wrap: wrap; }
+  .all {
+    font-size: 16px;
+    color: var(--bg);
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-thickness: 1px;
+    white-space: nowrap;
+  }
+  .all:hover { color: var(--action); }
+
+  /* Separate cards with air between them, so each reads as its own link. */
+  .cards {
+    list-style: none;
+    margin: clamp(28px, 4vw, 48px) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .cards a {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 10px 10px 16px;
+    background: var(--bg);
+    border: 2px solid var(--bg);
+    color: var(--ink);
+    text-decoration: none;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .cards a:hover, .cards a:focus-visible {
+    transform: translate(-3px, -3px);
+    box-shadow: 4px 4px 0 var(--action);
+  }
+  .art { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; background: #D8D2BD; border: 1px solid var(--rule); }
+  .cat { margin-top: 12px; font-family: var(--mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  .excerpt { display: none; }
+  .feature { grid-column: span 2; grid-row: span 2; }
+  .feature a { padding: 14px 14px 22px; }
+  .feature .cat { margin-top: 18px; font-size: 10px; }
+  .feature .title { font-size: clamp(20px, 1.8vw, 26px); letter-spacing: -.03em; line-height: 1.18; }
+  .feature .excerpt { display: block; margin-top: 12px; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); max-width: 46ch; text-wrap: pretty; }
+  .title { margin-top: 6px; font-size: 14px; font-weight: 500; letter-spacing: -.01em; line-height: 1.32; text-wrap: pretty; }
+
+  /* Smaller screens: three columns, then two, each showing six cards in full rows. */
+  @media (max-width: 1100px) {
+    .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cards > li:nth-child(7) { display: none; }
+    .feature { grid-column: auto; grid-row: auto; }
+    .feature a { padding: 10px 10px 16px; }
+    .feature .cat { margin-top: 12px; font-size: 9px; }
+    .feature .title { font-size: 14px; letter-spacing: -.01em; line-height: 1.32; }
+    .feature .excerpt { display: none; }
+  }
+  @media (max-width: 620px) {
+    .guides { padding-left: 18px; padding-right: 18px; }
+    .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .cards a { padding: 8px 8px 14px; }
+    .title { font-size: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cards a { transition: none; } }
+</style>

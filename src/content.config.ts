@@ -9,6 +9,7 @@ const guides = defineCollection({
     description: z.string(),
     category: z.string(),
     published: z.coerce.date(),
+    updated: z.coerce.date().optional(),
     order: z.number(),
     illustration: z.enum(['phone', 'battery', 'report']),
     draft: z.boolean().default(false),

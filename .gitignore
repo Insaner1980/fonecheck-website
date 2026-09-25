@@ -4,6 +4,8 @@ dist/
 .sonar/
 .playwright-cli/
 output/
+_backup-*/
+Claude outputs/
 .env
 .env.*
 !.env.example

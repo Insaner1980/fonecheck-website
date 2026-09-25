@@ -1,19 +1,177 @@
 ---
 import { getCollection, render } from 'astro:content';
-import Base from '../../layouts/Base.astro';
-import Arrow from '../../components/Arrow.astro';
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import PageShell from '../../layouts/PageShell.astro';
+
 export async function getStaticPaths() {
   const guides = await getCollection('guides', ({ data }) => !data.draft);
-  return guides.map(guide => ({ params: { id: guide.id }, props: { guide } }));
+  const sorted = guides.sort((a, b) => a.data.order - b.data.order);
+  return sorted.map((guide, i) => ({
+    params: { id: guide.id },
+    props: { guide, next: sorted[(i + 1) % sorted.length] },
+  }));
 }
-const { guide } = Astro.props;
+
+const { guide, next } = Astro.props;
 const { Content, headings } = await render(guide);
 const date = guide.data.published.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-const minutes = Math.max(1, Math.ceil((guide.body ?? '').split(/\s+/).length / 220));
+const sections = headings.filter(heading => heading.depth === 2);
+const illustrations = import.meta.glob<{ default: ImageMetadata }>('../../assets/guides/*.webp', { eager: true });
+const illustration = illustrations[`../../assets/guides/${guide.id}.webp`]?.default;
+if (!illustration) throw new Error(`Missing guide illustration: ${guide.id}`);
+// Link preview image with the fonecheck logo and the guide title (1200 x 630).
+// Falls back to a crop of the illustration if a guide has no preview image yet.
+const socialCards = import.meta.glob<string>('../../assets/guides-social/*.png', { eager: true, query: '?url', import: 'default' });
+const socialCard = socialCards[`../../assets/guides-social/${guide.id}.png`];
+const socialImage = socialCard
+  ? new URL(socialCard, Astro.site).href
+  : new URL((await getImage({ src: illustration, width: 1200, height: 630, fit: 'cover', format: 'webp' })).src, Astro.site).href;
+const datePublished = guide.data.published.toISOString();
+const dateModified = (guide.data.updated ?? guide.data.published).toISOString();
+const article = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: guide.data.title,
+  description: guide.data.description,
+  datePublished,
+  dateModified,
+  image: socialImage,
+  author: { '@type': 'Person', name: 'Emma Hotakainen' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'fonecheck',
+    logo: { '@type': 'ImageObject', url: new URL('/fonecheck-logo.svg', Astro.site).href },
+  },
+};
 ---
-<Base title={`${guide.data.title} — fonecheck`} description={guide.data.description}>
-  <div class="container">
-    <header class="page-header article-header"><a class="eyebrow text-link" href="/guides/">← All guides</a><h1>{guide.data.title}</h1><p class="lead">{guide.data.description}</p><div class="article-meta mono"><span>{guide.data.category}</span><time datetime={guide.data.published.toISOString()}>{date}</time><span>{minutes} min read</span></div></header>
-    <div class="article-layout"><aside class="article-toc" aria-label="In this guide"><p class="mono">In this guide</p><ol>{headings.filter(heading => heading.depth === 2).map(heading => <li><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol></aside><article class="prose"><Content /><aside class="article-cta"><h2>Get to know your phone.</h2><p>Explore the Android app behind these guides. Coming to Google Play in fall 2026.</p><a class="button button-orange" href="/#explore">Meet fonecheck <Arrow /></a></aside></article></div>
+<PageShell
+  title={guide.data.title}
+  description={guide.data.description}
+  heading={guide.data.title}
+  current="guides"
+  socialImage={socialImage}
+  socialAlt={guide.data.title}
+  articlePublished={datePublished}
+  structuredData={article}
+>
+  <p class="article-meta" slot="meta">
+    <span>{guide.data.category}</span>
+    <time datetime={guide.data.published.toISOString()}>{date}</time>
+  </p>
+
+  <div class="article">
+    {sections.length > 0 && (
+      <aside class="toc" aria-label="In this guide">
+        <p class="toc-head">In this guide</p>
+        <ol>{sections.map(section => <li><a href={`#${section.slug}`}>{section.text}</a></li>)}</ol>
+      </aside>
+    )}
+
+    <div class="article-main">
+      <div class="prose"><Content /></div>
+
+      <aside class="cta">
+        <h2>Put your phone to the test.</h2>
+        <p>fonecheck walks you through 14 diagnostic areas and keeps a report you can revisit and compare. Coming to Google Play in fall 2026.</p>
+        <a class="cta-action" href="/#areas">See what it checks</a>
+      </aside>
+
+      <a class="next" href={`/guides/${next.id}/`}>
+        <span class="next-tag">Next guide</span>
+        <span class="next-title">{next.data.title}</span>
+      </a>
+    </div>
   </div>
-</Base>
+</PageShell>
+
+<script>
+  // Highlight the table of contents entry for the section being read: the last
+  // section heading that has passed the upper third of the screen.
+  const toc = document.querySelector<HTMLElement>('.toc');
+  if (toc) {
+    const links = [...toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
+    const heads = links.map(a => document.getElementById(decodeURIComponent(a.hash.slice(1)))).filter((h): h is HTMLElement => !!h);
+    if (heads.length) {
+      toc.classList.add('is-tracking');
+      let ticking = false;
+      const update = () => {
+        ticking = false;
+        const line = innerHeight * 0.33;
+        let current = 0;
+        heads.forEach((h, i) => { if (h.getBoundingClientRect().top <= line) current = i; });
+        links.forEach((a, i) => a.classList.toggle('is-current', i === current));
+      };
+      addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+      addEventListener('resize', update);
+      update();
+    }
+  }
+</script>
+
+<style is:global>
+  .article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 26px 0 0;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .article-meta { gap: 6px 28px; }
+  .article-meta > * { padding: 7px 0; }
+
+  .article { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 56px; align-items: start; }
+  .toc { position: sticky; top: 24px; }
+  .toc-head {
+    margin: 0 0 12px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .toc ol { list-style: none; margin: 0; padding: 0; }
+  .toc a { display: block; padding: 7px 0; font-size: 13.5px; line-height: 1.4; color: var(--ink-2); transition: color 200ms ease; }
+  .toc.is-tracking a.is-current { color: var(--ink); font-weight: 600; }
+  .toc a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+
+  .cta { margin-top: clamp(44px, 5vw, 70px); padding: 28px 30px 30px; background: var(--mount); color: var(--bg); }
+  .cta h2 { margin: 0; font-size: clamp(24px, 2.6vw, 34px); font-weight: 500; letter-spacing: -.035em; line-height: 1.1; }
+  .cta p { margin: 14px 0 0; max-width: 48ch; font-size: 15px; line-height: 1.6; opacity: .88; }
+  .cta-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 50px;
+    margin-top: 22px;
+    padding: 0 20px;
+    background: var(--action);
+    color: var(--action-ink);
+    font-size: 14.5px;
+    font-weight: 500;
+  }
+  .cta-action:hover { background: #E05C2E; }
+
+  .next { display: block; margin-top: clamp(36px, 4vw, 52px); }
+  .next-tag {
+    display: block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .next-title { display: block; margin-top: 8px; font-size: 19px; font-weight: 500; letter-spacing: -.02em; line-height: 1.3; }
+  .next:hover .next-title { text-decoration: underline; text-underline-offset: 5px; }
+
+  @media (max-width: 900px) {
+    .article { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+    .toc { position: static; }
+  }
+  @media (max-width: 620px) {
+    .cta { padding: 22px 20px 24px; }
+  }
+</style>

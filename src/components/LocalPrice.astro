@@ -1,0 +1,51 @@
+---
+// Swaps every element marked with data-local-price to the Google Play price for
+// the visitor's country. The static HTML always contains the euro price, so
+// search engines, visitors without JavaScript and unknown countries see $6.99.
+//
+// Country is resolved in this order:
+//   1. ?country=XX in the address (for testing, e.g. /?country=IN)
+//   2. Cloudflare's own /cdn-cgi/trace on this domain (no third-party service)
+//   3. the browser's time zone, used right away while step 2 is loading
+---
+<script>
+  import { regionPrices, basePrice } from '../data/prices';
+  import { zoneCountry } from '../data/zone-country';
+  import { formatPrice } from '../data/price-format';
+
+  const targets = document.querySelectorAll<HTMLElement>('[data-local-price]');
+
+  const apply = (country: string | null) => {
+    const region = country ? regionPrices[country] : undefined;
+    const text = region
+      ? formatPrice(region.currency, region.amount, country!)
+      : formatPrice(basePrice.currency, basePrice.amount);
+    targets.forEach(el => { if (el.textContent !== text) el.textContent = text; });
+  };
+
+  const fromUrl = new URLSearchParams(location.search).get('country')?.toUpperCase() ?? null;
+
+  if (targets.length && fromUrl) {
+    apply(fromUrl);
+  } else if (targets.length) {
+    let zone = '';
+    try { zone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? ''; } catch { /* keep US dollars */ }
+    if (zoneCountry[zone]) apply(zoneCountry[zone]);
+
+    const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+    if (!local) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 2500);
+      fetch('/cdn-cgi/trace', { signal: ctrl.signal, cache: 'no-store' })
+        .then(r => (r.ok ? r.text() : ''))
+        .then(body => {
+          const loc = /^loc=([A-Z]{2})$/m.exec(body)?.[1];
+          // Cloudflare knows the country: use it, and fall back to US dollars if it
+          // is not one of the listed countries.
+          if (loc) apply(loc);
+        })
+        .catch(() => { /* keep the time zone guess */ })
+        .finally(() => clearTimeout(timer));
+    }
+  }
+</script>

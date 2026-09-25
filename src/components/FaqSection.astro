@@ -1,0 +1,130 @@
+---
+import { faqs } from '../data/product';
+---
+<section class="faq" id="faq" aria-labelledby="faq-title">
+  <div class="layout" data-reveal>
+  <header class="head">
+    <h2 data-mask id="faq-title">Before you ask.</h2>
+    <p class="more">
+      Still have a question? The <a href="/guides/">guides</a> go through each check in more detail. If the answer is not there, <a href="mailto:contact@finnvek.com">get in touch</a>.
+    </p>
+  </header>
+
+  <div class="list">
+    {faqs.map(([question, answer]) => (
+      <details name="faq">
+        <summary>
+          <span class="q">{question}</span>
+          <span class="mark" aria-hidden="true"></span>
+        </summary>
+        <p>{answer}</p>
+      </details>
+    ))}
+  </div>
+  </div>
+</section>
+
+<style>
+  .faq {
+    background: var(--panel);
+    border: 3px solid var(--edge);
+    border-top: 0;
+    padding: clamp(44px, 6vw, 88px) 30px clamp(40px, 5vw, 72px);
+  }
+  h2 {
+    margin: 0;
+    font-size: clamp(30px, 3.6vw, 52px);
+    font-weight: 500;
+    letter-spacing: -.04em;
+    line-height: 1.04;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 40px clamp(40px, 6vw, 96px);
+    align-items: start;
+  }
+  .head { position: sticky; top: 30px; }
+  /* The questions sit on a lighter panel, which frames the list without a line above it. */
+  /* Each question is its own light bar; the gaps between them show the section's
+     darker sand, so no lines are needed. */
+  .list { --pad: 28px; display: grid; gap: 6px; }
+  details { background: var(--bg); }
+  summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 22px;
+    align-items: baseline;
+    gap: 12px;
+    padding: 18px var(--pad);
+    cursor: pointer;
+    list-style: none;
+  }
+  /* Hover or keyboard focus: the plus turns orange too. */
+  /* Same hover as the guide cards on the front page: the bar lifts and an orange
+     block appears behind it. The bar keeps its light colour. */
+  details:has(summary:hover), details:has(summary:focus-visible) {
+    transform: translate(-3px, -3px);
+    box-shadow: 4px 4px 0 var(--action);
+  }
+  details { transition: transform .15s ease, box-shadow .15s ease; }
+  summary:focus-visible { outline: 2px solid var(--action); outline-offset: -2px; }
+  summary:hover .mark::before, summary:hover .mark::after,
+  summary:focus-visible .mark::before, summary:focus-visible .mark::after { background: var(--action); }
+  summary::-webkit-details-marker { display: none; }
+  .q { font-size: 17px; font-weight: 500; letter-spacing: -.01em; line-height: 1.4; }
+  .mark { position: relative; align-self: center; height: 12px; }
+  .mark::before, .mark::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 12px;
+    height: 2px;
+    background: var(--ink);
+    transition: background-color 160ms ease;
+  }
+  .mark::after { transform: rotate(90deg); transition: transform 160ms ease, background-color 160ms ease; }
+  details[open] .mark::after { transform: rotate(0deg); }
+
+  /* Opening and closing slide the answer open instead of jumping. Browsers
+     without ::details-content support simply open instantly. */
+  .faq { interpolate-size: allow-keywords; }
+  details::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition: block-size 260ms cubic-bezier(.2, .7, .2, 1), content-visibility 260ms allow-discrete;
+  }
+  details[open]::details-content { block-size: auto; }
+  details p { opacity: 0; transition: opacity 200ms ease; }
+  details[open] p { opacity: 1; transition-delay: 60ms; }
+
+  details p {
+    margin: 0;
+    padding: 0 calc(var(--pad) + 34px) 22px var(--pad);
+    max-width: calc(68ch + var(--pad) * 2);
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+
+  .more { margin: 28px 0 0; max-width: 34ch; font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+  .more a { text-decoration: underline; text-underline-offset: 4px; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+    .head { position: static; }
+    .more { max-width: 52ch; }
+  }
+  @media (max-width: 620px) {
+    .faq { padding-left: 18px; padding-right: 18px; }
+    summary { grid-template-columns: minmax(0, 1fr) 20px; gap: 10px; padding: 16px var(--pad); }
+    .q { font-size: 16px; }
+    details p { padding: 0 var(--pad) 20px; }
+    .list { --pad: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mark::before, .mark::after, details, details p, details::details-content { transition: none; }
+  }
+</style>

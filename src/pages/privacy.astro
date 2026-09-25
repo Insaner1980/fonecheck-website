@@ -1,6 +1,20 @@
 ---
-import Base from '../layouts/Base.astro';
+// The fonecheck privacy policy lives in the shared Finnvek policy. Cloudflare
+// answers /privacy/ with a permanent redirect (public/_redirects); this page is
+// only a fallback for hosts that ignore that file.
+const target = 'https://finnvek.com/privacy/#fonecheck';
 ---
-<Base title="Privacy information — fonecheck" description="How fonecheck is designed to handle local diagnostic reports, sharing and crash reporting before its planned release.">
-  <div class="container"><header class="page-header"><p class="eyebrow">Your findings. Your choice.</p><h1>Privacy, with context.</h1><p class="lead">fonecheck is being built around local diagnostic reports and sharing that you control.</p></header><div class="simple-page prose"><p><strong>Pre-release information, updated 10 September 2026.</strong> The app is not yet available. This page describes the current product plans; release-specific privacy details will be updated before the app launches.</p><h2>Diagnostic reports</h2><p>Diagnostics and saved report history are designed to stay on your phone. fonecheck has no automatic diagnostic report upload or report cloud sync. You can delete saved reports in the app.</p><p>Reports contain device diagnostic information. Exporting a PDF or JSON file creates a shareable copy. You decide whether to send it, and the receiving email or sharing service handles that copy under its own practices.</p><h2>Accounts and advertising</h2><p>fonecheck does not require a fonecheck account and is planned without advertising. The planned full-version purchase will be offered through Google Play. Google’s account and purchase handling are separate from local report storage.</p><h2>Permissions</h2><p>Some diagnostic functions need access to features such as the camera, microphone or location. Available checks depend on your device and the permissions you grant. A missing permission may limit a check.</p><h2>Crash reporting</h2><p>Firebase Crashlytics is planned for the released app to help investigate crashes. Its configuration, collected data and any available controls will be documented before release. Local report storage should not be read as a promise that the released app never sends any data.</p><h2>This website</h2><p>The website itself does not include advertising, analytics scripts, a mailing-list form or account registration. Fonts and app preview images are served with the site rather than requested from third-party font or image services.</p><p>Website delivery may involve technical request data processed by the hosting provider. Hosting-specific information will be added when the production hosting arrangement is confirmed.</p><h2>Get in touch</h2><p>For questions about these plans, contact <a href="mailto:contact@finnvek.com">contact@finnvek.com</a>.</p></div></div>
-</Base>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href="https://finnvek.com/privacy/" />
+    <title>Privacy policy | fonecheck</title>
+  </head>
+  <body>
+    <p>The fonecheck privacy policy is part of the <a href={target}>Finnvek privacy policy</a>.</p>
+  </body>
+</html>

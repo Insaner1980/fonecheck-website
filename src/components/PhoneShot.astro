@@ -1,0 +1,37 @@
+---
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+// A drawn phone (same frame as the hero) with a real app screen inside.
+// The screen image is cropped from the top, so long scrolling screenshots
+// show their first screenful. `uid` keeps the SVG ids unique on the page.
+interface Props { image: ImageMetadata; alt: string; uid: string; }
+const { image, alt, uid } = Astro.props;
+const src = (await getImage({ src: image, width: 600, format: 'webp' })).src;
+---
+<svg class="phone-shot" viewBox="266 18 230 484" role="img" aria-label={alt}>
+  <defs>
+    <clipPath id={`${uid}-screen`}><rect x="277.5" y="30" width="205" height="460" rx="29" /></clipPath>
+    <linearGradient id={`${uid}-metal`} x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#6A706D" />
+      <stop offset="0.025" stop-color="#3A3F3D" />
+      <stop offset="0.5" stop-color="#2B302E" />
+      <stop offset="0.975" stop-color="#3A3F3D" />
+      <stop offset="1" stop-color="#6A706D" />
+    </linearGradient>
+  </defs>
+  <rect fill="#3A3F3D" x="488" y="150" width="3.4" height="37" rx="1.7" />
+  <rect fill="#3A3F3D" x="488" y="205" width="3.4" height="67" rx="1.7" />
+  <rect fill={`url(#${uid}-metal)`} stroke="#1A1D1C" stroke-width="1" x="270" y="22.5" width="220" height="475" rx="37" />
+  <rect fill="#050606" x="273" y="25.5" width="214" height="469" rx="34" />
+  <g clip-path={`url(#${uid}-screen)`}>
+    <rect fill="#07080A" x="277.5" y="30" width="205" height="460" />
+    <image href={src} x="277.5" y="30" width="205" height="460" preserveAspectRatio="xMidYMin slice" />
+  </g>
+  <circle fill="#050606" stroke="#1E2326" stroke-width="1" cx="380" cy="40" r="5.6" />
+  <circle fill="#101418" cx="380" cy="40" r="3.4" />
+</svg>
+
+<style>
+  .phone-shot { display: block; width: 100%; height: auto; aspect-ratio: 230 / 484; }
+</style>

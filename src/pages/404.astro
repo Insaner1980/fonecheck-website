@@ -1,7 +1,35 @@
 ---
-import Base from '../layouts/Base.astro';
-import Arrow from '../components/Arrow.astro';
+import PageShell from '../layouts/PageShell.astro';
 ---
-<Base title="Page not found — fonecheck" description="This page could not be found. Explore fonecheck or browse the phone guides." noindex>
-  <section class="container not-found"><p class="eyebrow">404 / A missing connection</p><h1>Nothing to see here.<br />Plenty to explore.</h1><p>The page may have moved, or the address might not be quite right.</p><a class="button button-orange" href="/">Back to fonecheck <Arrow /></a></section>
-</Base>
+<PageShell
+  title="Page not found | fonecheck"
+  description="This page could not be found. See what fonecheck checks, or browse the Android phone guides."
+  heading="Nothing here to measure."
+  lead="The page may have moved, or the address might not be quite right."
+  noindex
+>
+  <div class="lost">
+    <a class="lost-action" href="/">Back to fonecheck</a>
+    <p class="lost-links">
+      Or try the <a href="/guides/">guides</a>, the <a href="/#pricing">pricing</a> or <a href="/#faq">the questions</a>.
+    </p>
+  </div>
+</PageShell>
+
+<style is:global>
+  .lost-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 56px;
+    padding: 0 22px;
+    border: 3px solid var(--edge);
+    background: var(--action);
+    color: var(--action-ink);
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .lost-action:hover { background: #E05C2E; }
+  .lost-links { margin: 22px 0 0; font-size: 15px; color: var(--ink-2); }
+  .lost-links a { text-decoration: underline; text-underline-offset: 4px; }
+</style>

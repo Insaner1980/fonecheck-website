@@ -1,0 +1,157 @@
+---
+import { categories } from '../data/product';
+import { basePriceText } from '../data/price-format';
+
+const free = categories.filter(category => category.free).map(category => category.name);
+const freeList = `${free.slice(0, -1).join(', ')} and ${free[free.length - 1]}`;
+
+const fullIncludes = [
+  'All 14 diagnostic areas',
+  'Guided Full Check across every area',
+  'Overall score and test coverage',
+  'Saved reports and report history',
+  'Comparison of compatible reports',
+  'Retest a single area without losing the old report',
+  'Export as PDF or JSON',
+];
+---
+<section class="pricing" id="pricing" aria-labelledby="pricing-title">
+  <header class="head" data-reveal>
+    <h2 data-mask id="pricing-title">Free to start. One payment for the rest.</h2>
+    <p class="intro">
+      fonecheck is free to download. Four diagnostic areas stay free with no time limit and no
+      account, so you can see whether it tells you anything useful before paying anything.
+    </p>
+  </header>
+
+  <div class="plans" data-reveal="stagger">
+    <article class="plan">
+      <p class="plan-tag">Free</p>
+      <p class="price"><span class="amount">&euro;0</span></p>
+      <p class="plan-note">No time limit, no trial countdown, no account.</p>
+      <ul>
+        <li>{freeList}</li>
+        <li>Full readings and guided checks in those four areas</li>
+        <li>Theme and app language settings</li>
+      </ul>
+    </article>
+
+    <article class="plan is-full">
+      <p class="plan-tag">Full version</p>
+      <p class="price"><span class="amount" data-local-price>{basePriceText}</span> <span class="unit">once</span></p>
+      <p class="plan-note">A single in-app purchase. No subscription, no recurring payment.</p>
+      <ul>
+        {fullIncludes.map(item => <li>{item}</li>)}
+      </ul>
+    </article>
+  </div>
+
+  <p class="caveat">
+    Buying the full version does not remove the limits set by your phone's hardware, its Android
+    version or the permissions you grant. An area that cannot be measured stays unmeasured, and the
+    report says so.
+  </p>
+</section>
+
+<style>
+  .pricing {
+    background: var(--bg);
+    border: 3px solid var(--edge);
+    border-top: 0;
+    padding: clamp(44px, 6vw, 88px) 30px clamp(40px, 5vw, 72px);
+  }
+  .head { max-width: 62rem; }
+  h2 {
+    margin: 0;
+    font-size: clamp(30px, 3.6vw, 52px);
+    font-weight: 500;
+    letter-spacing: -.04em;
+    line-height: 1.04;
+    max-width: 17ch;
+  }
+  .intro {
+    margin: 24px 0 0;
+    max-width: 58ch;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+
+  .plans {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 1040px;
+    margin: clamp(36px, 4.5vw, 58px) 0 0;
+    border-top: 3px solid var(--edge);
+  }
+  .plan { padding: 26px 30px 30px; border-left: 1px solid var(--hairline); }
+  .plan:first-child { border-left: 0; padding-left: 0; }
+  .plan.is-full {
+    background: var(--window-bg);
+    border-left: 3px solid var(--edge);
+    color: var(--window-text);
+  }
+  .plan.is-full .plan-tag,
+  .plan.is-full .unit { color: #A7AE93; }
+  .plan.is-full .amount { color: var(--action); }
+  .plan.is-full .plan-note { color: #B9BEA6; }
+  .plan.is-full li { color: var(--window-text); border-top-color: #34372A; }
+
+  .plan-tag {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .price { margin: 12px 0 0; display: flex; align-items: baseline; gap: 9px; }
+  .amount { font-size: clamp(34px, 3.4vw, 46px); font-weight: 500; letter-spacing: -.04em; line-height: 1; }
+  .unit {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .plan-note { margin: 12px 0 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); max-width: 36ch; }
+
+  .plan ul { list-style: none; margin: 22px 0 0; padding: 0; }
+  .plan li {
+    padding: 9px 0 9px 22px;
+    border-top: 1px solid var(--rule);
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--ink);
+    position: relative;
+  }
+  .plan li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 16px;
+    width: 9px;
+    height: 9px;
+    border: 2px solid var(--edge);
+  }
+  .plan.is-full li::before { background: var(--action); border-color: var(--action); }
+
+  .caveat {
+    max-width: 62ch;
+    margin: clamp(28px, 3.5vw, 44px) 0 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 860px) {
+    .pricing { padding-left: 24px; padding-right: 24px; }
+    .plans { grid-template-columns: minmax(0, 1fr); }
+    .plan { border-left: 0; padding-left: 0; padding-right: 0; }
+    .plan.is-full { border-left: 0; border-top: 3px solid var(--edge); padding-left: 22px; padding-right: 22px; }
+  }
+  @media (max-width: 620px) {
+    .pricing { padding-left: 18px; padding-right: 18px; }
+  }
+</style>

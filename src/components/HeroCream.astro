@@ -1,0 +1,190 @@
+---
+import { getImage } from 'astro:assets';
+import home from '../assets/hero/home.png';
+import { basePriceText } from '../data/price-format';
+
+// The hero shows one large phone with the real fonecheck home screen: the
+// result of a saved Full Check with mixed results. The other screens are
+// shown in the areas section below.
+const homeSrc = (await getImage({ src: home, width: 720, format: 'webp' })).src;
+
+const facts = [
+  ['Download', 'Fall 2026', 'Free on Google Play'],
+  ['Full version', basePriceText, 'One payment, no subscription'],
+  ['Your data', 'Stays on your phone', 'No ads, no account'],
+];
+---
+<div class="shell">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="lede">
+      <h1 id="hero-title"><span class="ln"><span>Put your phone</span></span> <span class="ln"><span>to the test.</span></span></h1>
+      <p class="body">Check your screen, sound, cameras, battery and more, and keep a report of what was found.</p>
+      <a class="action" href="#areas">See what it checks</a>
+    </div>
+
+    <figure class="rig">
+      <div class="plate">
+        <svg viewBox="266 18 230 484" role="img" aria-label="The fonecheck home screen after a Full Check: 7 of 14 categories passed, with a status for each of the 14 areas.">
+          <defs>
+            <clipPath id="screenClip"><rect x="277.5" y="30" width="205" height="460" rx="29" /></clipPath>
+            <linearGradient id="frameMetal" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stop-color="#6A706D" />
+              <stop offset="0.025" stop-color="#3A3F3D" />
+              <stop offset="0.5" stop-color="#2B302E" />
+              <stop offset="0.975" stop-color="#3A3F3D" />
+              <stop offset="1" stop-color="#6A706D" />
+            </linearGradient>
+            <radialGradient id="lens" cx="0.4" cy="0.35" r="0.7">
+              <stop offset="0" stop-color="#2C3A4A" />
+              <stop offset="0.55" stop-color="#101418" />
+              <stop offset="1" stop-color="#050606" />
+            </radialGradient>
+          </defs>
+
+          <!-- side keys sit just outside the frame on the right, like a current Android phone -->
+          <rect class="key" x="488" y="150" width="3.4" height="37" rx="1.7" />
+          <rect class="key" x="488" y="205" width="3.4" height="67" rx="1.7" />
+
+          <!-- metal frame, black bezel, screen -->
+          <rect class="frame" x="270" y="22.5" width="220" height="475" rx="37" />
+          <rect class="bezel" x="273" y="25.5" width="214" height="469" rx="34" />
+          <g clip-path="url(#screenClip)">
+            <rect class="glass" x="277.5" y="30" width="205" height="460" />
+            <image class="shot" href={homeSrc} x="277.5" y="30" width="205" height="460" preserveAspectRatio="xMidYMin slice" />
+          </g>
+          <circle class="punch" cx="380" cy="40" r="5.6" />
+          <circle cx="380" cy="40" r="3.4" fill="url(#lens)" />
+          <circle cx="378.9" cy="38.9" r="0.9" fill="#8FA3B8" opacity=".55" />
+        </svg>
+      </div>
+    </figure>
+  </section>
+
+  <dl class="facts">
+    {facts.map(([label, value, sub]) => <div><dt>{label}</dt><dd><span class="fv" data-local-price={label === 'Full version' ? '' : undefined}>{value}</span><span class="fs">{sub}</span></dd></div>)}
+  </dl>
+</div>
+
+<style>
+  .shell {
+    border: 3px solid var(--edge);
+    border-top: 0;
+    background: var(--bg);
+    min-height: calc(100svh - 105px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 48px;
+    align-items: center;
+    padding: clamp(16px, 2.6svh, 30px) 30px 0;
+  }
+  .lede { max-width: 40rem; display: flex; flex-direction: column; justify-content: center; }
+
+  /* Each headline line slides up from behind its own edge. The padding keeps
+     descenders and cap tops inside the clipping box. */
+  .ln { display: block; overflow: hidden; padding: .06em 0 .14em; margin: -.06em 0 -.14em; }
+  .ln > span { display: block; }
+  h1 { margin: 0; font-size: clamp(40px, 4.6vw, 72px); font-weight: 500; letter-spacing: -.045em; line-height: 1.02; }
+  .body { margin: 24px 0 0; max-width: 46ch; font-size: 17px; line-height: 1.6; color: var(--ink-2); text-wrap: pretty; }
+  .action {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 56px;
+    margin-top: 26px;
+    padding: 0 22px;
+    border: 3px solid var(--edge);
+    background: var(--action);
+    color: var(--action-ink);
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .action:hover { background: #E05C2E; }
+
+  /* ---------- the phone ----------
+     The phone is larger than the hero and is cut off on purpose by the thick
+     line above the facts bar. It is sized from the screen height so that the
+     counter, the Start Full Check button and the first rows of the status
+     panel stay in view. The phone is positioned absolutely, so it never makes
+     the hero taller than the screen. */
+  .rig {
+    position: relative;
+    align-self: stretch;
+    margin: 0;
+    min-width: 0;
+    min-height: 420px;
+    overflow: hidden;
+  }
+  .plate {
+    position: absolute;
+    top: clamp(24px, 4svh, 44px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(100%, clamp(300px, calc((100svh - 290px) * 0.67), 460px));
+    aspect-ratio: 230 / 484;
+  }
+  .plate svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+  .frame { fill: url(#frameMetal); stroke: #1A1D1C; stroke-width: 1; }
+  .bezel { fill: #050606; }
+  .glass { fill: #07080A; }
+  .punch { fill: #050606; stroke: #1E2326; stroke-width: 1; }
+  .key { fill: #3A3F3D; }
+
+
+  /* ---------- entrance ----------
+     fc-pre is set by the intro script before the page paints (only when motion
+     is allowed); fc-enter is added when the intro logo lands. Keyframes only
+     give a starting point, so each element settles into its normal style. */
+  :global(html.fc-pre:not(.fc-enter)) .ln > span { transform: translateY(110%); }
+  :global(html.fc-pre:not(.fc-enter)) .body,
+  :global(html.fc-pre:not(.fc-enter)) .action,
+  :global(html.fc-pre:not(.fc-enter)) .plate,
+  :global(html.fc-pre:not(.fc-enter)) .facts { opacity: 0; }
+
+  :global(html.fc-enter) .ln > span { animation: line-up 950ms cubic-bezier(.16,1,.3,1) both; }
+  :global(html.fc-enter) .ln + .ln > span { animation-delay: 90ms; }
+  :global(html.fc-enter) .body { animation: rise 800ms cubic-bezier(.16,1,.3,1) 240ms both; }
+  :global(html.fc-enter) .action { animation: rise 800ms cubic-bezier(.16,1,.3,1) 340ms both; }
+  :global(html.fc-enter) .plate { animation: phone-up 1000ms cubic-bezier(.16,1,.3,1) 200ms both; }
+  @keyframes phone-up { from { opacity: 0; transform: translate(-50%, 40px); } }
+  :global(html.fc-enter) .facts { animation: fade 700ms ease 900ms both; }
+
+  @keyframes line-up { from { transform: translateY(110%); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+  @keyframes fade { from { opacity: 0; } }
+
+  /* ---------- facts ---------- */
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 3px solid var(--edge); margin: 0; }
+  .facts > div { padding: 14px 30px 16px; border-left: 1px solid var(--hairline); }
+  .facts > div:first-child { border-left: 0; }
+  .facts dt { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .facts dd { margin: 6px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; color: var(--ink); }
+  .facts .fv { font-size: clamp(20px, 1.9vw, 27px); font-weight: 500; letter-spacing: -.035em; line-height: 1.1; }
+  .facts .fs { font-size: 13.5px; line-height: 1.4; color: var(--ink-2); }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: minmax(0, 1fr); gap: 36px; padding: 32px 24px 0; align-items: start; }
+    .rig { min-height: 0; height: 500px; }
+    .plate { top: 0; width: min(100%, 340px); }
+    .facts { grid-template-columns: 1fr; }
+    .facts > div { border-left: 0; border-top: 1px solid var(--hairline); padding-left: 24px; padding-right: 24px; }
+    .facts > div:first-child { border-top: 0; }
+  }
+
+  @media (max-width: 640px) {
+    .shell { min-height: 0; }
+    .hero { padding: 26px 18px 0; }
+    .rig { height: 440px; }
+    .plate { width: min(100%, 300px); }
+    .facts > div { padding: 14px 18px 16px; }
+    .action { width: 100%; justify-content: center; }
+  }
+</style>

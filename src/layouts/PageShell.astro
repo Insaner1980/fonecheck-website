@@ -1,0 +1,85 @@
+---
+import InstrumentLayout from './InstrumentLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  heading: string;
+  lead?: string;
+  current?: string;
+  noindex?: boolean;
+  socialImage?: string;
+  socialAlt?: string;
+  articlePublished?: string;
+  structuredData?: object;
+}
+const { title, description, heading, lead, current, noindex = false, socialImage, socialAlt, articlePublished, structuredData } = Astro.props;
+---
+<InstrumentLayout title={title} description={description} noindex={noindex} skipTo="#page-title" socialImage={socialImage} socialAlt={socialAlt} articlePublished={articlePublished}>
+  {structuredData && <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
+  <div class="shell">
+    <SiteHeader current={current} />
+
+    <main>
+      <header class="page-head">
+        <h1 id="page-title">{heading}</h1>
+        {lead && <p class="lead">{lead}</p>}
+        <slot name="meta" />
+      </header>
+
+      <div class="page-body"><slot /></div>
+    </main>
+  </div>
+  <SiteFooter />
+</InstrumentLayout>
+
+<style>
+  .shell {
+    border: 3px solid var(--edge);
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* The header's ruler sits on the same darker sand as the heading area,
+     so it reads as the top edge of that area instead of a light strip. */
+  .shell :global(.ticks) {
+    opacity: 1;
+    background:
+      repeating-linear-gradient(90deg, color-mix(in srgb, var(--edge) 50%, transparent) 0 1px, transparent 1px 9px),
+      var(--panel);
+  }
+  .page-head {
+    padding: clamp(40px, 5.5vw, 78px) 30px clamp(28px, 3.2vw, 44px);
+    /* The heading area sits on the darker sand, the text below on the light one,
+       so the two are told apart without a line. */
+    background: var(--panel);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(34px, 4.4vw, 68px);
+    font-weight: 500;
+    letter-spacing: -.045em;
+    line-height: 1.03;
+    max-width: 20ch;
+  }
+  .lead {
+    margin: 22px 0 0;
+    max-width: 56ch;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+
+  .page-body { padding: clamp(36px, 4.5vw, 64px) 30px clamp(48px, 6vw, 88px); }
+
+  @media (max-width: 1080px) {
+    .page-head, .page-body { padding-left: 24px; padding-right: 24px; }
+  }
+  @media (max-width: 620px) {
+    .page-head, .page-body { padding-left: 18px; padding-right: 18px; }
+  }
+</style>

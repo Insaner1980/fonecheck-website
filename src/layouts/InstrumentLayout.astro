@@ -1,0 +1,299 @@
+---
+import { Font } from 'astro:assets';
+
+interface Props {
+  title: string;
+  description: string;
+  noindex?: boolean;
+  skipTo?: string;
+  socialImage?: string;
+  socialAlt?: string;
+  articlePublished?: string;
+}
+const { title, description, noindex = false, skipTo = '#page-title', socialImage, socialAlt, articlePublished } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const image = socialImage ?? new URL('/social.png', Astro.site).href;
+const imageAlt = socialAlt ?? 'fonecheck. Put your phone to the test. Coming to Google Play in fall 2026.';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#6F6A5B" />
+    <Font cssVariable="--font-dm-sans" preload={[{ subset: 'latin' }]} />
+    <Font cssVariable="--font-jetbrains-mono" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content={articlePublished ? 'article' : 'website'} />
+    <meta property="og:site_name" content="fonecheck" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:alt" content={imageAlt} />
+    {articlePublished && <meta property="article:published_time" content={articlePublished} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={image} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href={skipTo}>Skip to content</a>
+    <div class="progress" aria-hidden="true"><span></span></div>
+    <span id="top" tabindex="-1"></span>
+    <slot />
+    <script>
+      // Scroll reveal: sections rise in as they enter the screen. Nothing is
+      // hidden unless this script runs and the visitor allows motion.
+      const els = document.querySelectorAll<HTMLElement>('[data-reveal]');
+      if (els.length && 'IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        els.forEach(el => {
+          if (el.dataset.reveal === 'stagger') [...el.children].forEach((c, i) => (c as HTMLElement).style.setProperty('--i', String(Math.min(i, 8))));
+        });
+        document.documentElement.classList.add('reveal-on');
+        const io = new IntersectionObserver(entries => {
+          entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+        }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+        els.forEach(el => io.observe(el));
+      }
+
+      // Section headings rise line by line from behind a mask, like the hero title.
+      // Lines are measured when the heading comes into view, and the original
+      // markup is put back afterwards so the heading reflows normally.
+      const heads = document.querySelectorAll<HTMLElement>('h2[data-mask]');
+      if (heads.length && 'IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const split = (h: HTMLElement) => {
+          const original = h.innerHTML;
+          const words = (h.textContent || '').trim().split(/\s+/);
+          h.innerHTML = words.map(w => `<span class="mw">${w}</span>`).join(' ');
+          const lines: string[][] = [];
+          let top = -1;
+          h.querySelectorAll<HTMLElement>('.mw').forEach(w => {
+            if (w.offsetTop !== top) { lines.push([]); top = w.offsetTop; }
+            lines[lines.length - 1].push(w.textContent || '');
+          });
+          h.innerHTML = lines.map((l, i) => `<span class="ml"><span class="mi" style="--l:${i}">${l.join(' ')}</span></span>`).join(' ');
+          h.classList.remove('mask-wait');
+          requestAnimationFrame(() => requestAnimationFrame(() => h.classList.add('mask-in')));
+          setTimeout(() => { h.innerHTML = original; h.classList.remove('mask-in'); }, 900 + lines.length * 110);
+        };
+        heads.forEach(h => h.classList.add('mask-wait'));
+        const hio = new IntersectionObserver(entries => {
+          entries.forEach(e => { if (e.isIntersecting) { hio.unobserve(e.target); split(e.target as HTMLElement); } });
+        }, { rootMargin: '0px 0px -10% 0px' });
+        heads.forEach(h => hio.observe(h));
+      }
+
+      // Reading progress: once the header's ruler scrolls away, a copy of it stays
+      // at the top of the screen and fills with orange as you read down the page.
+      const bar = document.querySelector<HTMLElement>('.progress');
+      if (bar) {
+        const fill = bar.firstElementChild as HTMLElement;
+        let ticking = false;
+        const update = () => {
+          ticking = false;
+          const max = document.documentElement.scrollHeight - innerHeight;
+          const p = max > 0 ? Math.min(1, scrollY / max) : 0;
+          fill.style.transform = `scaleX(${p})`;
+          bar.classList.toggle('is-on', scrollY > 160);
+          // The compact header (SiteHeader .float) shows at the same point.
+          document.documentElement.classList.toggle('scrolled', scrollY > 160);
+        };
+        addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+        addEventListener('resize', update);
+        update();
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    /* Height of the compact header that follows the page (SiteHeader .float). */
+    --float-h: 52px;
+    --housing: #6F6A5B;
+    --mount: #1D2220;
+    --bg: #D8D2BD;
+    --panel: #C6C1AE;
+    --panel-alt: #BDB8A5;
+    --edge: #17180F;
+    --rule: #9D9886;
+    --hairline: #B7B19F;
+    --ink: #17191C;
+    --ink-2: #454844;
+    --ink-3: #4B4D46;
+    --window-bg: #17180F;
+    --window-frame: #8B8675;
+    --window-text: #E8ECD4;
+    --window-dim: #7F8A6A;
+    --window-off: #2A2D1D;
+    --action: #CF4F24;
+    --action-ink: #0F0400;
+    --sans: var(--font-dm-sans);
+    --mono: var(--font-jetbrains-mono);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body, h1, h2, p, figure, dl { margin: 0; }
+  img, svg { display: block; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; cursor: pointer; }
+  body {
+    background: var(--housing);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: 10px;
+  }
+  ::selection { background: var(--action); color: #F6F2E6; }
+  :focus-visible { outline: 3px solid var(--action); outline-offset: 4px; }
+  .skip {
+    position: fixed;
+    z-index: 10;
+    top: 12px;
+    left: 12px;
+    padding: 12px 20px;
+    background: var(--edge);
+    color: var(--bg);
+    transform: translateY(-180%);
+  }
+  .skip:focus { transform: none; }
+
+  /* ---------- long-form typography, shared by guides and info pages ---------- */
+  .prose { max-width: 68ch; font-size: 16.5px; line-height: 1.72; color: var(--ink-2); }
+  .prose > * + * { margin-top: 1.15em; }
+  .prose h2 {
+    margin-top: 2.2em;
+    margin-bottom: .65em;
+    font-size: clamp(22px, 2.2vw, 30px);
+    font-weight: 500;
+    letter-spacing: -.03em;
+    line-height: 1.22;
+    color: var(--ink);
+    padding-top: .75em;
+    text-wrap: balance;
+  }
+  .prose h3 {
+    margin-top: 1.9em;
+    margin-bottom: .5em;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -.01em;
+    line-height: 1.35;
+    color: var(--ink);
+  }
+  .prose strong { font-weight: 500; color: var(--ink); }
+  .prose a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  .prose a:hover { color: var(--action); }
+  .prose ul, .prose ol { padding-left: 0; list-style: none; }
+  .prose li { position: relative; padding-left: 26px; margin-top: .5em; }
+  .prose ul > li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: .62em;
+    width: 7px;
+    height: 7px;
+    border: 2px solid var(--ink-3);
+  }
+  .prose ol { counter-reset: step; }
+  .prose ol > li { counter-increment: step; }
+  .prose ol > li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: .16em;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    color: var(--ink-3);
+  }
+  .prose blockquote {
+    margin-left: 0;
+    padding: 18px 24px;
+    background: var(--panel);
+    font-size: 15.5px;
+  }
+  .prose code {
+    font-family: var(--mono);
+    font-size: .88em;
+    padding: 1px 5px;
+    background: var(--panel);
+  }
+  .prose img { margin-block: 1.6em; border: 3px solid var(--edge); }
+  .prose table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .prose th, .prose td { text-align: left; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--rule); }
+  .prose th { font-weight: 500; color: var(--ink); font-size: 13px; }
+
+  @media (max-width: 620px) { body { padding: 6px; } .prose { font-size: 16px; } }
+  /* ---------- heading mask reveal ---------- */
+  h2.mask-wait { visibility: hidden; }
+  h2 .ml { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .1em; margin-bottom: -.1em; }
+  h2 .mi { display: inline-block; transform: translateY(105%); transition: transform 800ms cubic-bezier(.2, .75, .2, 1); transition-delay: calc(var(--l) * 110ms); }
+  h2.mask-in .mi { transform: none; }
+
+  /* Anchored sections stop below the compact header instead of under it. */
+  [id] { scroll-margin-top: calc(var(--float-h) + 16px); }
+
+  /* ---------- reading progress ruler ---------- */
+  .progress {
+    position: fixed;
+    top: var(--float-h);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    height: 8px;
+    background: repeating-linear-gradient(90deg, rgba(23, 24, 15, .45) 0 1px, transparent 1px 9px), var(--bg);
+    border-bottom: 1px solid var(--edge);
+    transform: translateY(calc(-100% - var(--float-h)));
+    transition: transform 250ms ease;
+    pointer-events: none;
+  }
+  .progress.is-on { transform: none; }
+  .progress span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: var(--action);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  @media (prefers-reduced-motion: reduce) { .progress { transition: none; } }
+
+  /* ---------- scroll reveal ---------- */
+  html.reveal-on [data-reveal]:not([data-reveal='stagger']),
+  html.reveal-on [data-reveal='stagger'] > * {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 700ms cubic-bezier(.2, .7, .2, 1), transform 700ms cubic-bezier(.2, .7, .2, 1);
+    transition-delay: calc(var(--i, 0) * 80ms);
+  }
+  html.reveal-on [data-reveal].is-in:not([data-reveal='stagger']),
+  html.reveal-on [data-reveal='stagger'].is-in > * { opacity: 1; transform: none; }
+
+  /* Heavy top rules draw across from the left when their block comes in. */
+  .groups, .plans { position: relative; }
+  html.reveal-on .groups, html.reveal-on .plans { border-top-color: transparent !important; }
+  html.reveal-on .groups::before, html.reveal-on .plans::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    margin-top: -3px;
+    background: var(--edge);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 900ms cubic-bezier(.6, 0, .2, 1);
+  }
+  html.reveal-on .groups::before { height: 2px; margin-top: -2px; }
+  html.reveal-on .groups.is-in::before, html.reveal-on .plans.is-in::before { transform: scaleX(1); }
+
+</style>

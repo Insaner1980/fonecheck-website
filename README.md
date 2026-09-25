@@ -19,6 +19,12 @@ npm run preview
 
 Production output is `dist/`. Production domain is configured as `https://fonecheck.app`. Deployment is not performed by the build command.
 
+## Cloudflare Pages
+
+The Wrangler Direct Upload project is `fonecheck-website` (production branch `main`). It has no deployment yet. When the SEO launch checks are complete and publication is authorized, build and deploy with `npm run build` and `npx wrangler pages deploy dist --project-name fonecheck-website --branch main`.
+
+Pages serves the generated `404.html` for missing routes. Astro copies `public/_headers` into `dist/`; it sets long-lived caching for hashed `/_astro/` assets, common response headers, and `noindex` on Pages preview domains. Verify those response headers on the production and preview domains after the first deployment.
+
 Astro 7 can run its local server in the background. Stop a preview started for review with `npm run preview -- stop` when finished.
 
 ## Add a guide
@@ -44,7 +50,7 @@ draft: false
 - Product descriptions and launch pricing derive from the supplied 8 September 2026 website brief and `C:\Dev\fonecheck\PROJECT.md`.
 - App images are copies of selected user-provided screenshots in `src/assets/`; their source files are unchanged. They show pre-release example data, not general performance or condition claims.
 - `src/data/product.ts` contains the diagnostic catalogue and FAQ. The homepage contains the pricing presentation.
-- Fontsource packages supply DM Sans and JetBrains Mono locally, with their respective licence files included in the installed packages.
+- Astro's Fonts API bundles DM Sans and JetBrains Mono into the static build with a metric-adjusted fallback for DM Sans. The font licence files are in `public/licenses/`.
 - The hero offers six real app views in both themes, swipe navigation, and an enlarged screenshot dialog. With JavaScript disabled, the overview and direct screenshot links remain available. Diagnostic areas and FAQ use native `details` elements. Motion respects reduced-motion preferences.
 
 ## Before publication

@@ -1,0 +1,314 @@
+---
+import { categories } from '../data/product';
+import PhoneShot from './PhoneShot.astro';
+import thermal from '../assets/hero/thermal.png';
+import audio from '../assets/hero/audio.png';
+import report from '../assets/report-light.png';
+
+// Three real app screens that show how an area works: what Android reports,
+// what you check yourself, and the report you keep.
+const shots = [
+  { uid: 'shot-thermal', image: thermal, label: 'What Android reports', text: 'Thermal headroom and battery temperature, read from the system.', alt: 'The fonecheck Thermal screen with a headroom gauge at 0.64 and a battery temperature of 32.2 degrees.' },
+  { uid: 'shot-audio', image: audio, label: 'What you check yourself', text: 'Play a tone through the speaker and confirm what you actually heard.', alt: 'The fonecheck Audio screen with speaker test tones and buttons to confirm what was heard.' },
+  { uid: 'shot-report', image: report, label: 'What you keep', text: 'A saved report with a score and what was covered. Full version.', alt: 'A saved fonecheck report with an overall score of 96 out of 100 and partial coverage.' },
+];
+
+const groups = [
+  { id: 'hands', title: 'Look, listen, touch', note: 'Guided checks where you confirm what actually happens.' },
+  { id: 'inside', title: 'Inside the phone', note: 'What Android reports about the hardware and how it runs.' },
+  { id: 'signals', title: 'Signals and sensors', note: 'Networks, radios and the sensors that react to you.' },
+];
+
+const icons: Record<string, string> = {
+  'Display': '<rect pathLength="1" x="6" y="2.5" width="12" height="19" rx="2"/><path pathLength="1" d="M6 5.5h12M6 18.5h12"/><path pathLength="1" d="M9 9h2v2H9zM13 9h2v2h-2zM9 13h2v2H9zM13 13h2v2h-2z"/>',
+  'Audio': '<path pathLength="1" d="M3.5 9.5H7L11.5 5.5v13L7 14.5H3.5z"/><path pathLength="1" d="M15 9a4 4 0 0 1 0 6M17.5 6.5a7.5 7.5 0 0 1 0 11"/>',
+  'Camera': '<rect pathLength="1" x="3" y="6.5" width="18" height="13" rx="2"/><path pathLength="1" d="M8.5 6.5 10 4h4l1.5 2.5"/><circle pathLength="1" cx="12" cy="13" r="3.5"/>',
+  'Vibration': '<rect pathLength="1" x="8" y="4" width="8" height="16" rx="1.5"/><path pathLength="1" d="M5 8.5v7M2.5 10.5v3M19 8.5v7M21.5 10.5v3"/>',
+  'Volume buttons': '<rect pathLength="1" x="4.5" y="2.5" width="11" height="19" rx="2"/><path pathLength="1" d="M19 5.5v4.5M19 12.5v3.5"/>',
+  'Device': '<rect pathLength="1" x="6.5" y="6.5" width="11" height="11" rx="1"/><rect pathLength="1" x="9.5" y="9.5" width="5" height="5"/><path pathLength="1" d="M9.5 3v3.5M14.5 3v3.5M9.5 17.5V21M14.5 17.5V21M3 9.5h3.5M3 14.5h3.5M17.5 9.5H21M17.5 14.5H21"/>',
+  'Performance': '<path pathLength="1" d="M3.5 17a8.5 8.5 0 0 1 17 0"/><path pathLength="1" d="M12 17l4.5-5.5"/><path pathLength="1" d="M6.5 11.5l1 1M12 8.5v1.5M17.5 11.5l-1 1"/><circle pathLength="1" cx="12" cy="17" r="1"/>',
+  'Battery': '<rect pathLength="1" x="2.5" y="7.5" width="16.5" height="9" rx="1.5"/><path pathLength="1" d="M21.5 10.5v3M6 10.5v3M9 10.5v3M12 10.5v3"/>',
+  'Thermal': '<path pathLength="1" d="M10 13.5V5a2 2 0 0 1 4 0v8.5a4 4 0 1 1-4 0z"/><path pathLength="1" d="M12 9v7.5"/><path pathLength="1" d="M17 6h2.5M17 9h2.5"/>',
+  'Storage': '<ellipse pathLength="1" cx="12" cy="6" rx="7" ry="2.5"/><path pathLength="1" d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/><path pathLength="1" d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/>',
+  'SIM & mobile network': '<path pathLength="1" d="M6.5 2.5H14l3.5 3.5v15.5h-11z"/><rect pathLength="1" x="9" y="11" width="6" height="7" rx="1"/><path pathLength="1" d="M12 11v7M9 14.5h6"/>',
+  'Sensors': '<circle pathLength="1" cx="12" cy="12" r="8.5"/><path pathLength="1" d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/><circle pathLength="1" cx="12" cy="12" r="2"/>',
+  'Connectivity': '<path pathLength="1" d="M3 9.5a13 13 0 0 1 18 0M6 13a8.5 8.5 0 0 1 12 0M9 16.5a4 4 0 0 1 6 0"/><circle pathLength="1" cx="12" cy="19.5" r=".9"/>',
+  'Biometrics': '<path pathLength="1" d="M7.5 19.5c1.3-2.2 1.8-4.6 1.8-7.3a2.7 2.7 0 0 1 5.4 0c0 3-.5 5.7-1.7 8.3"/><path pathLength="1" d="M4.5 15.5c.7-1.2 1-2.4 1-3.6a6.5 6.5 0 0 1 13 0c0 2.4-.3 4.5-1 6.6"/><path pathLength="1" d="M12 12.2c0 3.2-.8 6.1-2.4 8.3"/>',
+};
+
+const free = categories.filter(category => category.free).map(category => category.name);
+const freeList = `${free.slice(0, -1).join(', ')} and ${free[free.length - 1]}`;
+const paidCount = categories.length - free.length;
+---
+<section class="areas" id="areas" aria-labelledby="areas-title">
+  <header class="areas-head" data-reveal>
+    <div>
+      <h2 data-mask id="areas-title">Fourteen areas, one at a time or all at once.</h2>
+    </div>
+    <p class="intro">
+      Open a single area when you want to check one thing, or run a Full Check to walk through all
+      fourteen in one pass. Every area combines what Android reports about your phone with checks
+      you carry out yourself, so the result says what was actually observed.
+    </p>
+  </header>
+
+  <p class="run" aria-hidden="true">
+    <span class="run-label">Full Check</span>
+    <span class="run-count"><span class="run-n">14</span> / 14</span>
+  </p>
+
+  <div class="groups" data-reveal="stagger">
+    {groups.map(group => {
+      const items = categories.filter(c => c.group === group.id);
+      return (
+        <section class="group" aria-labelledby={`group-${group.id}`}>
+          <header class="group-head">
+            <h3 id={`group-${group.id}`}>{group.title}</h3>
+            <p class="group-note">{group.note}</p>
+          </header>
+          <ul class="items" role="list">
+            {items.map(item => (
+              <li class="item">
+                <span class="icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={icons[item.name]} />
+                </span>
+                <span class="text">
+                  <span class="name">{item.name}</span>
+                  <span class="short">{item.short}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    })}
+  </div>
+
+  <ol class="shots" role="list" data-reveal="stagger">
+    {shots.map(shot => (
+      <li class="shot">
+        <PhoneShot image={shot.image} alt={shot.alt} uid={shot.uid} />
+        <p class="shot-label">{shot.label}</p>
+        <p class="shot-text">{shot.text}</p>
+      </li>
+    ))}
+  </ol>
+
+  <div class="foot">
+    <p>
+      <b>{freeList} are free</b>, with no time limit and no account. The full version opens the
+      other {paidCount === 10 ? 'ten' : paidCount}, along with Full Check, saved reports and export.
+    </p>
+    <p class="caveat">
+      What each area can measure depends on your phone's hardware, its Android version and the
+      permissions you grant. An area that cannot be measured is not a fault, and the report says so
+      rather than guessing.
+    </p>
+  </div>
+</section>
+
+<style>
+  .areas {
+    background: var(--panel);
+    border: 3px solid var(--edge);
+    border-top: 0;
+    padding: clamp(44px, 6vw, 88px) 30px clamp(40px, 5vw, 72px);
+  }
+
+  .areas-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 32px 64px;
+    align-items: end;
+  }
+  h2 {
+    margin: 0;
+    font-size: clamp(30px, 3.6vw, 52px);
+    font-weight: 500;
+    letter-spacing: -.04em;
+    line-height: 1.04;
+    max-width: 16ch;
+  }
+  .intro {
+    margin: 0;
+    max-width: 50ch;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+
+  /* Three phones side by side after the list, the middle one set lower. */
+  .shots {
+    list-style: none;
+    margin: clamp(44px, 5vw, 72px) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(24px, 4vw, 64px);
+    align-items: start;
+  }
+  .shot { max-width: 210px; justify-self: center; width: 100%; }
+  .shot:nth-child(2) { margin-top: clamp(28px, 4vw, 64px); }
+  .shot-label {
+    display: flex;
+    gap: 12px;
+    margin: 20px 0 0;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .shot-text { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); text-wrap: pretty; }
+
+  .groups {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 0;
+    border-top: 2px solid var(--edge);
+  }
+  .group { padding: 26px 30px 8px; }
+  .group:first-child { padding-left: 0; }
+  .group:last-child { padding-right: 0; }
+  .group + .group { border-left: 1px solid var(--rule); }
+
+  .group-head { min-height: 90px; }
+  h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -.03em;
+    line-height: 1.15;
+  }
+  .group-note {
+    margin: 8px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 34ch;
+  }
+
+  .items { list-style: none; margin: 18px 0 0; padding: 0; }
+  .item {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    padding: 14px 0;
+    border-top: 1px solid var(--rule);
+  }
+  .icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+  }
+  /* Full Check readout above the groups; the script below runs it once. */
+  .run {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: clamp(44px, 5vw, 72px) 0 0;
+    padding-bottom: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  /* The readout sits on the line above the list, like the display of an
+     instrument, not as a heading. While the run is going the count turns orange. */
+  .run-count { display: inline-flex; align-items: baseline; gap: .6em; font-size: 13px; letter-spacing: .08em; }
+  .run-n { color: var(--ink); transition: color 200ms ease; }
+  .run.is-running .run-n { color: var(--action); }
+
+  .item.is-lit .icon { background: var(--action); border-color: var(--action); color: var(--action-ink); }
+  .item:hover .icon { background: var(--action); border-color: var(--action); color: var(--action-ink); }
+  /* On hover the icon redraws itself, like a trace on an instrument. */
+  @media (prefers-reduced-motion: no-preference) {
+    .item:hover .icon svg > *, .item.is-lit .icon svg > * { stroke-dasharray: 1; animation: trace 700ms cubic-bezier(.4, 0, .2, 1) both; }
+  }
+  @keyframes trace { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  .text { display: grid; gap: 2px; min-width: 0; }
+  .name { font-size: 17px; font-weight: 500; letter-spacing: -.02em; line-height: 1.3; color: var(--ink); }
+  .short { font-size: 13.5px; line-height: 1.45; color: var(--ink-2); text-wrap: pretty; }
+
+  .foot {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 26px 52px;
+    margin-top: clamp(32px, 4vw, 52px);
+    padding-top: 26px;
+    border-top: 1px solid var(--rule);
+  }
+  .foot p { margin: 0; max-width: 52ch; font-size: 15px; line-height: 1.6; color: var(--ink-2); }
+  .foot b { font-weight: 500; color: var(--ink); }
+  .caveat { font-size: 13.5px; }
+
+  @media (max-width: 1080px) {
+    .areas { padding-left: 24px; padding-right: 24px; }
+    .areas-head { grid-template-columns: minmax(0, 1fr); }
+    .groups { grid-template-columns: minmax(0, 1fr); }
+    .group, .group:first-child, .group:last-child { padding: 26px 0 8px; }
+    .group + .group { border-left: 0; border-top: 1px solid var(--rule); margin-top: 18px; }
+    .group-head { min-height: 0; }
+    .items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+    .foot { grid-template-columns: minmax(0, 1fr); }
+  }
+  /* Phones: a row you swipe sideways, one and a bit phones wide. */
+  @media (max-width: 720px) {
+    .shots {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: 60%;
+      gap: 18px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      margin-right: -18px;
+      padding-right: 18px;
+      padding-bottom: 8px;
+    }
+    .shot { scroll-snap-align: start; max-width: none; }
+    .shot:nth-child(2) { margin-top: 0; }
+  }
+  @media (max-width: 620px) {
+    .areas { padding-left: 18px; padding-right: 18px; }
+    .items { grid-template-columns: minmax(0, 1fr); }
+    .item { gap: 14px; }
+    h3 { font-size: 22px; }
+  }
+</style>
+
+<script>
+  // Full Check run: when the areas come into view, each one lights up in turn,
+  // the way the app walks through all fourteen. Runs once, never with reduced motion.
+  const run = document.querySelector<HTMLElement>('.areas .run');
+  const groups = document.querySelector<HTMLElement>('.areas .groups');
+  if (run && groups && 'IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const items = [...groups.querySelectorAll<HTMLElement>('.item')];
+    const count = run.querySelector('.run-n')!;
+    const total = items.length;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    count.textContent = '00';
+    const start = () => {
+      run.classList.add('is-running');
+      items.forEach((item, i) => {
+        setTimeout(() => {
+          item.classList.add('is-lit');
+          count.textContent = pad(i + 1);
+          setTimeout(() => item.classList.remove('is-lit'), 520);
+          if (i === total - 1) setTimeout(() => { run.classList.remove('is-running'); run.classList.add('is-done'); }, 520);
+        }, i * 150);
+      });
+    };
+    const io = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) { io.disconnect(); setTimeout(start, 700); }
+    }, { threshold: 0.35 });
+    io.observe(groups);
+  }
+</script>

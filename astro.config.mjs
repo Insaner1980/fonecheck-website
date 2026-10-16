@@ -16,6 +16,13 @@ const guideLastmod = new Map(readdirSync(guidesDir).filter(file => file.endsWith
 // The model lookup pages change when their device data does.
 const devicesUpdated = JSON.parse(readFileSync(new URL('./src/data/devices.json', import.meta.url), 'utf8')).sourceUpdated.slice(0, 10);
 
+const lastmodFor = path => {
+  const guide = /^\/guides\/([^/]+)\/$/.exec(path)?.[1];
+  if (guide) return guideLastmod.get(guide);
+  if (path.startsWith('/model-lookup/')) return devicesUpdated;
+  return undefined;
+};
+
 export default defineConfig({
   site: 'https://fonecheck.app',
   trailingSlash: 'always',
@@ -23,9 +30,7 @@ export default defineConfig({
     // /privacy/ only forwards to the shared Finnvek privacy policy.
     filter: page => new URL(page).pathname !== '/privacy/',
     serialize(item) {
-      const path = new URL(item.url).pathname;
-      const id = /^\/guides\/([^/]+)\/$/.exec(path)?.[1];
-      const date = id ? guideLastmod.get(id) : path.startsWith('/model-lookup/') ? devicesUpdated : undefined;
+      const date = lastmodFor(new URL(item.url).pathname);
       if (date) item.lastmod = date;
       return item;
     },

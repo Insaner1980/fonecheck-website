@@ -13,6 +13,8 @@ const guideLastmod = new Map(readdirSync(guidesDir).filter(file => file.endsWith
   if (!published) throw new Error(`Missing published date in ${file}`);
   return [file.slice(0, -3), updated ?? published];
 }));
+// The model lookup pages change when their device data does.
+const devicesUpdated = JSON.parse(readFileSync(new URL('./src/data/devices.json', import.meta.url), 'utf8')).sourceUpdated.slice(0, 10);
 
 export default defineConfig({
   site: 'https://fonecheck.app',
@@ -21,8 +23,9 @@ export default defineConfig({
     // /privacy/ only forwards to the shared Finnvek privacy policy.
     filter: page => new URL(page).pathname !== '/privacy/',
     serialize(item) {
-      const id = /^\/guides\/([^/]+)\/$/.exec(new URL(item.url).pathname)?.[1];
-      const date = id && guideLastmod.get(id);
+      const path = new URL(item.url).pathname;
+      const id = /^\/guides\/([^/]+)\/$/.exec(path)?.[1];
+      const date = id ? guideLastmod.get(id) : path.startsWith('/model-lookup/') ? devicesUpdated : undefined;
       if (date) item.lastmod = date;
       return item;
     },

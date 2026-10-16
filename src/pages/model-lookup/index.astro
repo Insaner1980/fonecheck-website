@@ -26,7 +26,7 @@ const tool = {
   title="Android model code lookup: which phone is this?"
   description="Type an Android model code such as SM-S911B or M2012K11AG and see which phone it belongs to, with its chip, memory, storage, display and battery."
   heading="Which phone is this model code?"
-  lead={`Type the model code from a listing or the phone's settings. The lookup shows which phone it belongs to and its specifications. It covers more than ${phoneCount} popular Android phones.`}
+  lead={`Type the model code from a listing or the phone's settings. The lookup shows which phone it belongs to and its specifications. It covers at least ${phoneCount} popular Android phones.`}
   current="lookup"
   structuredData={tool}
 >
@@ -303,12 +303,13 @@ const tool = {
     const link = (event.target as Element).closest<HTMLAnchorElement>('a[data-code]');
     if (!link || event.metaKey || event.ctrlKey || event.shiftKey || !entries) return;
     event.preventDefault();
+    clearTimeout(timer);
     setQuery(link.dataset.code!, 'push');
     typing = false;
     input.focus({ preventScroll: true });
     form.scrollIntoView({ block: 'nearest' });
   });
-  addEventListener('popstate', () => { typing = false; setQuery(new URL(location.href).searchParams.get('q') ?? '', 'none'); });
+  addEventListener('popstate', () => { clearTimeout(timer); typing = false; setQuery(new URL(location.href).searchParams.get('q') ?? '', 'none'); });
 
   const load = async () => {
     status.textContent = 'Loading the device list.';

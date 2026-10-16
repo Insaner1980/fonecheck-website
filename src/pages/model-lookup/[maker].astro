@@ -5,7 +5,7 @@ import { directory, fullName, specLine } from '../../data/model-lookup';
 import { formatDate, formatPartialDate } from '../../data/date-format';
 import '../../styles/model-lookup.css';
 
-// One page per maker: every device the LineageOS Wiki documents for that
+// One page per maker: every phone the LineageOS Wiki documents for that
 // maker, newest first, with its model codes, so the codes can be found by
 // search engines and by browsing.
 export function getStaticPaths() {
@@ -32,14 +32,14 @@ const breadcrumbs = {
 ---
 <PageShell
   title={`${maker.title} model codes and specifications`}
-  description={`${list.length} ${maker.title} devices with their model codes, chip, memory, display, battery and release date.`}
+  description={`${list.length} ${maker.title} phones with their model codes, chip, memory, display, battery and release date.`}
   heading={`${maker.title} model codes`}
-  lead={`${maker.title} devices documented in the LineageOS Wiki, newest first, with their model codes and main specifications.`}
+  lead={`${maker.title} phones documented in the LineageOS Wiki, newest first, with their model codes and main specifications.`}
   current="lookup"
   structuredData={breadcrumbs}
 >
   <dl class="maker-meta" slot="meta">
-    <div><dt>Devices</dt><dd>{list.length}</dd></div>
+    <div><dt>Phones</dt><dd>{list.length}</dd></div>
     <div><dt>Model codes</dt><dd>{codeCount}</dd></div>
     <div><dt>Data from</dt><dd>{listDate}</dd></div>
   </dl>

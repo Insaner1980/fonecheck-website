@@ -45,6 +45,16 @@ draft: false
 
 `illustration` accepts `phone`, `battery` or `report`. Set `draft: true` to exclude an entry from routes and listings. Use H2 headings for the automatic table of contents. The homepage shows the first three non-draft guides sorted by `order`. Dates are displayed in UTC to avoid timezone shifts.
 
+## Model code lookup
+
+`/model-lookup/` finds the phone behind an Android model code (for example SM-S911B), or a phone by name, and shows its chip, memory, storage, display, battery and release date. `/model-lookup/<maker>/` lists each maker's devices with their codes as static, indexable pages. The makers are defined in `directory` in `src/data/model-lookup.ts`.
+
+- Data: `src/data/devices.json` is a committed snapshot of the LineageOS Wiki device data (`github.com/LineageOS/lineage_wiki`, `_data/devices/*.yml`), licensed under CC BY-SA 3.0. The pages credit the wiki and the licence; the shortened data is shown under the same licence. The build reads only this snapshot.
+- Coverage: about 760 devices, 640 of them phones, mostly popular models from Samsung, Xiaomi, Motorola, Google, OnePlus, LG and Sony. Many devices list their model codes; Pixel devices are found by name or codename. The page says so and never treats a missing code as a problem with the phone.
+- Update: `npm run devices:update`, then rebuild. `scripts/update-devices.mjs` uses the GitHub API once for the commit and file list, downloads each device file, and keeps the old snapshot if too few files are read or the count drops sharply.
+- The browser downloads `/model-lookup/devices.json` (generated at build by `src/pages/model-lookup/devices.json.ts`). Matching rules live in `src/data/model-lookup.ts` and are shared by the build and the search script.
+- Google Play's supported devices list and the Play Console device catalog are deliberately not used: neither states permission to republish it.
+
 ## Content and assets
 
 - Product descriptions and launch pricing derive from the supplied 8 September 2026 website brief and `C:\Dev\fonecheck\PROJECT.md`.

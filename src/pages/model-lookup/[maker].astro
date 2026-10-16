@@ -1,0 +1,91 @@
+---
+import PageShell from '../../layouts/PageShell.astro';
+import { devices } from '../../data/devices';
+import { directory, fullName, specLine } from '../../data/model-lookup';
+import { formatDate, formatPartialDate } from '../../data/date-format';
+import '../../styles/model-lookup.css';
+
+// One page per maker: every phone the LineageOS Wiki documents for that
+// maker, newest first, with its model codes, so the codes can be found by
+// search engines and by browsing.
+export function getStaticPaths() {
+  return directory.map(maker => ({ params: { maker: maker.slug }, props: { maker } }));
+}
+
+const { maker } = Astro.props;
+const vendors = new Set<string>(maker.vendors);
+const list = devices.devices
+  .filter(device => vendors.has(device.vendor))
+  .sort((a, b) => b.release.localeCompare(a.release) || a.name.localeCompare(b.name));
+if (!list.length) throw new Error(`No devices in the list for ${maker.slug}`);
+const codeCount = new Set(list.flatMap(device => device.models)).size;
+const listDate = formatDate(devices.sourceUpdated);
+const others = directory.filter(other => other.slug !== maker.slug);
+const breadcrumbs = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Model code lookup', item: new URL('/model-lookup/', Astro.site).href },
+    { '@type': 'ListItem', position: 2, name: `${maker.title} model codes`, item: new URL(`/model-lookup/${maker.slug}/`, Astro.site).href },
+  ],
+};
+---
+<PageShell
+  title={`${maker.title} model codes and specifications`}
+  description={`${list.length} ${maker.title} phones with their model codes, chip, memory, display, battery and release date.`}
+  heading={`${maker.title} model codes`}
+  lead={`${maker.title} phones documented in the LineageOS Wiki, newest first, with their model codes and main specifications.`}
+  current="lookup"
+  structuredData={breadcrumbs}
+>
+  <dl class="maker-meta" slot="meta">
+    <div><dt>Phones</dt><dd>{list.length}</dd></div>
+    <div><dt>Model codes</dt><dd>{codeCount}</dd></div>
+    <div><dt>Data from</dt><dd>{listDate}</dd></div>
+  </dl>
+
+  <p class="maker-back">
+    <a class="action-button" href="/model-lookup/">Search all makers</a>
+  </p>
+
+  <ol class="maker-index" role="list">
+    {list.map(device => (
+      <li class="match">
+        <div class="match-text">
+          <h2 class="match-name"><a class="match-link" href={`/model-lookup/?q=${encodeURIComponent(fullName(device))}`}>{device.name}</a></h2>
+          <p class="match-brand">
+            {vendors.size > 1 && <span>{device.vendor}</span>}
+            {device.release && <span>{formatPartialDate(device.release)}</span>}
+          </p>
+          {specLine(device) && <p class="match-spec">{specLine(device)}</p>}
+        </div>
+        <p class="codes">
+          {device.models.map(model => <a class="code" href={`/model-lookup/?q=${encodeURIComponent(model)}`}>{model}</a>)}
+        </p>
+      </li>
+    ))}
+  </ol>
+
+  <section class="makers" aria-labelledby="makers-head">
+    <h2 id="makers-head">Other makers</h2>
+    <ul class="maker-list" role="list">
+      {others.map(other => <li><a href={`/model-lookup/${other.slug}/`}>{other.title}</a></li>)}
+    </ul>
+  </section>
+
+  <p class="credit">
+    Device names, model codes and specifications from the <a href="https://wiki.lineageos.org/devices/">LineageOS Wiki</a>, retrieved {listDate}, licensed under <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a> and shown here in a shortened form under the same licence. fonecheck is not affiliated with LineageOS or {maker.title}.
+  </p>
+</PageShell>
+
+<style is:global>
+  .maker-meta { display: flex; flex-wrap: wrap; gap: 6px 36px; margin: 26px 0 0; }
+  .maker-meta > div { padding: 7px 0; }
+  .maker-meta dt { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .maker-meta dd { margin: 4px 0 0; font-size: 18px; letter-spacing: -.02em; color: var(--ink); }
+
+  .maker-back { margin: 0 0 clamp(24px, 3vw, 36px); }
+
+  .maker-index { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--edge); }
+  .maker-index .match-name { margin: 0; }
+</style>

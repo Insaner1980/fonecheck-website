@@ -122,6 +122,8 @@ const imageAlt = socialAlt ?? 'fonecheck. Put your phone to the test. Coming to 
     --edge: #17180F;
     --rule: #9D9886;
     --hairline: #B7B19F;
+    --field: #E6E1CF;
+    --field-focus: #F3EFE3;
     --ink: #17191C;
     --ink-2: #454844;
     --ink-3: #4B4D46;
@@ -131,6 +133,7 @@ const imageAlt = socialAlt ?? 'fonecheck. Put your phone to the test. Coming to 
     --window-dim: #7F8A6A;
     --window-off: #2A2D1D;
     --action: #CF4F24;
+    --action-hover: #E05C2E;
     --action-ink: #0F0400;
     --sans: var(--font-dm-sans);
     --mono: var(--font-jetbrains-mono);
@@ -162,6 +165,22 @@ const imageAlt = socialAlt ?? 'fonecheck. Put your phone to the test. Coming to 
     transform: translateY(-180%);
   }
   .skip:focus { transform: none; }
+
+  /* Orange primary button, as on the homepage hero. */
+  .action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 56px;
+    padding: 0 22px;
+    border: 3px solid var(--edge);
+    border-radius: 0;
+    background: var(--action);
+    color: var(--action-ink);
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .action-button:hover { background: var(--action-hover); }
 
   /* ---------- long-form typography, shared by guides and info pages ---------- */
   .prose { max-width: 68ch; font-size: 16.5px; line-height: 1.72; color: var(--ink-2); }

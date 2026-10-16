@@ -9,27 +9,14 @@ import PageShell from '../layouts/PageShell.astro';
   noindex
 >
   <div class="lost">
-    <a class="lost-action" href="/">Back to fonecheck</a>
+    <a class="action-button" href="/">Back to fonecheck</a>
     <p class="lost-links">
-      Or try the <a href="/guides/">guides</a>, the <a href="/#pricing">pricing</a> or <a href="/#faq">the questions</a>.
+      Or try the <a href="/guides/">guides</a>, the <a href="/model-lookup/">model code lookup</a>, the <a href="/#pricing">pricing</a> or <a href="/#faq">the questions</a>.
     </p>
   </div>
 </PageShell>
 
 <style is:global>
-  .lost-action {
-    display: inline-flex;
-    align-items: center;
-    gap: 16px;
-    min-height: 56px;
-    padding: 0 22px;
-    border: 3px solid var(--edge);
-    background: var(--action);
-    color: var(--action-ink);
-    font-size: 15px;
-    font-weight: 500;
-  }
-  .lost-action:hover { background: #E05C2E; }
   .lost-links { margin: 22px 0 0; font-size: 15px; color: var(--ink-2); }
   .lost-links a { text-decoration: underline; text-underline-offset: 4px; }
 </style>

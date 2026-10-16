@@ -1,0 +1,421 @@
+---
+import PageShell from '../../layouts/PageShell.astro';
+import AppCta from '../../components/AppCta.astro';
+import { devices } from '../../data/devices';
+import { directory } from '../../data/model-lookup';
+import { formatDate } from '../../data/date-format';
+import '../../styles/model-lookup.css';
+
+const listDate = formatDate(devices.sourceUpdated);
+// Rounded down, so the page never claims more than the list has.
+const phoneCount = Math.floor(devices.devices.filter(d => /phone|foldable/i.test(d.type)).length / 50) * 50;
+const examples = ['SM-S911B', 'M2012K11AG', 'Pixel 9'];
+const tool = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Android model code lookup',
+  url: new URL('/model-lookup/', Astro.site).href,
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'Any',
+  browserRequirements: 'Requires JavaScript',
+  description: 'Find the Android phone behind a model code such as SM-S911B, with its chip, memory, display and battery.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+};
+---
+<PageShell
+  title="Android model code lookup: which phone is this?"
+  description="Type an Android model code such as SM-S911B or M2012K11AG and see which phone it belongs to, with its chip, memory, storage, display and battery."
+  heading="Which phone is this model code?"
+  lead={`Type the model code from a listing or the phone's settings. The lookup shows which phone it belongs to and its specifications. It covers more than ${phoneCount} popular Android phones.`}
+  current="lookup"
+  structuredData={tool}
+>
+  <div class="lookup" data-lookup>
+    <form class="search" role="search" action="/model-lookup/" method="get" data-search>
+      <label class="search-label" for="lookup-q">Model code or phone name</label>
+      <div class="search-row">
+        <input
+          id="lookup-q"
+          name="q"
+          type="search"
+          inputmode="text"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          maxlength="80"
+          placeholder="e.g. SM-S911B"
+          aria-describedby="lookup-status"
+        />
+        <button class="action-button" type="submit">Look up</button>
+      </div>
+      <p class="examples">
+        <span>Try</span>
+        {examples.map(code => <a href={`/model-lookup/?q=${encodeURIComponent(code)}`} data-code={code}>{code}</a>)}
+      </p>
+    </form>
+
+    <div class="source">
+      <p id="lookup-status" class="status" data-status role="status">LineageOS Wiki device data, {listDate}.</p>
+    </div>
+
+    <noscript>
+      <p class="noscript">The lookup needs JavaScript. You can still browse the phones by maker below.</p>
+    </noscript>
+
+    <div class="results" data-results hidden></div>
+  </div>
+
+  <div class="info">
+    <section class="prose" aria-labelledby="find-code">
+      <h2 id="find-code">Where to find the model code</h2>
+      <ul>
+        <li><strong>On the phone:</strong> open Settings, then About phone (on some phones About device). Look for Model or Model number. On Pixel phones this shows the name, such as Pixel 9: type that.</li>
+        <li><strong>In a listing:</strong> look for a code like SM-A525F or M2012K11AG in the title or description.</li>
+      </ul>
+      <p>Spaces, hyphens and capitals do not matter. You can also type part of a code, or a name such as Galaxy S23.</p>
+    </section>
+
+    <section class="prose" aria-labelledby="what-it-means">
+      <h2 id="what-it-means">What you get</h2>
+      <ul>
+        <li><strong>The phone's name:</strong> which model the code belongs to.</li>
+        <li><strong>Specifications:</strong> chip, memory, storage, display, battery and release date. Memory and storage list every version sold, such as 128/256 GB.</li>
+        <li><strong>Something to compare with the listing:</strong> if a seller claims more memory or storage than the model was sold with, or a different chip, ask about it.</li>
+        <li><strong>Not found?</strong> That does not mean something is wrong with the phone. The lookup covers popular phones documented in the LineageOS Wiki, not every Android device.</li>
+      </ul>
+    </section>
+  </div>
+
+  <section class="makers" aria-labelledby="makers-head">
+    <h2 id="makers-head">Browse phones by maker</h2>
+    <ul class="maker-list" role="list">
+      {directory.map(maker => <li><a href={`/model-lookup/${maker.slug}/`}>{maker.title}</a></li>)}
+    </ul>
+  </section>
+
+  <AppCta heading="Know the model. Then check the phone.">
+    The lookup tells you which phone a code belongs to. With the phone in your hand, fonecheck shows the model, Android version and specifications the system reports, and walks you through 14 diagnostic areas. Coming to Google Play in fall 2026.
+  </AppCta>
+
+  <p class="credit">
+    Device names, model codes and specifications from the <a href="https://wiki.lineageos.org/devices/">LineageOS Wiki</a>, retrieved {listDate}, licensed under <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a> and shown here in a shortened form under the same licence. fonecheck is not affiliated with LineageOS or the device makers.
+  </p>
+</PageShell>
+
+<script>
+  import { codeKey, fullName, nameKey, specLine, words, type Device, type LookupList } from '../../data/model-lookup';
+  import { formatPartialDate } from '../../data/date-format';
+
+  interface Entry { device: Device; codes: Set<string>; nameKey: string; fullKey: string; codename: string; text: string }
+
+  const root = document.querySelector<HTMLElement>('[data-lookup]')!;
+  const form = root.querySelector<HTMLFormElement>('[data-search]')!;
+  const input = form.querySelector<HTMLInputElement>('input')!;
+  const status = root.querySelector<HTMLElement>('[data-status]')!;
+  const results = root.querySelector<HTMLElement>('[data-results]')!;
+  const listStatus = status.textContent ?? '';
+
+  const MAX_MATCHES = 40;
+  let entries: Entry[] | null = null;
+
+  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+
+  const searchLink = (className: string, label: string, query: string) => {
+    const a = el('a', className, label);
+    a.href = `/model-lookup/?q=${encodeURIComponent(query)}`;
+    a.dataset.code = query;
+    return a;
+  };
+
+  // A dark readout for a matched phone. Found by a code: that code on top and
+  // the phone's other codes below. Found by name: all its codes on top.
+  const readout = (device: Device, code: string | null) => {
+    const card = el('article', 'readout');
+    const top = code ? [code] : device.models;
+    if (top.length) card.append(el('p', 'readout-tag', top.length > 1 ? 'Model codes' : 'Model code'), el('p', 'readout-code', top.join(', ')));
+    card.append(el('h3', 'readout-name', device.name));
+    const facts = el('dl', 'readout-facts');
+    const add = (label: string, value: string | string[]) => {
+      const lines = (Array.isArray(value) ? value : [value]).filter(Boolean);
+      if (!lines.length) return;
+      const row = el('div');
+      const dd = el('dd');
+      lines.forEach(line => dd.append(el('span', '', line)));
+      row.append(el('dt', '', label), dd);
+      facts.append(row);
+    };
+    add('Maker', device.vendor);
+    add('Chip', device.soc);
+    add('Memory', device.ram);
+    add('Storage', device.storage);
+    add('Display', device.screen);
+    add('Battery', device.battery);
+    if (device.release) add('Released', formatPartialDate(device.release));
+    if (code) {
+      const others = device.models.filter(m => codeKey(m) !== codeKey(code));
+      if (others.length) add('Other model codes', others.join(', '));
+    }
+    add('Device codename', device.codename);
+    card.append(facts);
+
+    const source = el('p', 'readout-source');
+    const wiki = el('a', '', 'LineageOS Wiki');
+    wiki.href = `https://wiki.lineageos.org/devices/${encodeURIComponent(device.codename)}/`;
+    source.append('Details from the ', wiki, '. Memory and storage are the options the model was sold with.');
+    card.append(source);
+    return card;
+  };
+
+  const matchRow = (device: Device, currentKey: string) => {
+    const li = el('li', 'match');
+    const text = el('div', 'match-text');
+    const title = el('p', 'match-name');
+    title.append(searchLink('match-link', device.name, fullName(device)));
+    text.append(title, el('p', 'match-brand', device.vendor));
+    const line = specLine(device);
+    if (line) text.append(el('p', 'match-spec', line));
+    const codes = el('p', 'match-codes');
+    device.models.forEach(m => codes.append(searchLink(codeKey(m) === currentKey ? 'code is-current' : 'code', m, m)));
+    li.append(text, codes);
+    return li;
+  };
+
+  // Ranks possible matches: codes starting with the query first, then names
+  // that equal or start with it, then everything else; newer phones first.
+  const rank = (entry: Entry, key: string, wanted: string) => {
+    if (key.length >= 3 && [...entry.codes].some(c => c.startsWith(key))) return 0;
+    if (entry.nameKey === wanted || entry.fullKey === wanted) return 0;
+    if (entry.nameKey.startsWith(wanted) || entry.fullKey.startsWith(wanted)) return 1;
+    return 2;
+  };
+
+  const render = (raw: string) => {
+    const query = raw.trim();
+    results.replaceChildren();
+    if (!query || !entries) {
+      results.hidden = true;
+      status.textContent = listStatus;
+      return;
+    }
+
+    let looked = query;
+    let key = codeKey(query);
+    const byCode = (k: string) => entries!.filter(e => e.codes.has(k));
+    let exact = byCode(key);
+    // "SM-S911B/DSN" and similar: try the part before the slash, and say so.
+    if (!exact.length && query.includes('/')) {
+      const base = query.slice(0, query.indexOf('/')).trim();
+      const baseKey = codeKey(base);
+      const found = baseKey.length >= 3 ? byCode(baseKey) : [];
+      if (found.length) { looked = base; key = baseKey; exact = found; }
+    }
+    // No code matches: a name typed in full, with or without spaces
+    // ("galaxy s 23", "Samsung Galaxy S23"), or the device codename finds the phone.
+    const wanted = nameKey(query);
+    const byName = !exact.length && wanted.length >= 3;
+    if (byName) exact = entries.filter(e => e.nameKey === wanted || e.fullKey === wanted || e.codename === key);
+
+    const tokens = words(query);
+    const exactSet = new Set(exact);
+    const related = key.length < 2 ? [] : entries
+      .filter(e => !exactSet.has(e) && (
+        (key.length >= 3 && [...e.codes].some(c => c.startsWith(key))) ||
+        (wanted.length >= 4 && (e.nameKey.includes(wanted) || e.fullKey.includes(wanted))) ||
+        (tokens.length > 0 && tokens.every(t => e.text.includes(t)))))
+      .sort((a, b) => rank(a, key, wanted) - rank(b, key, wanted) || b.device.release.localeCompare(a.device.release) || a.device.name.localeCompare(b.device.name));
+
+    if (exact.length) {
+      const section = el('section', 'block');
+      section.setAttribute('aria-labelledby', 'exact-head');
+      const head = el('h2', 'block-head', exact.length > 1 ? `${exact.length} phones match` : 'Exact match');
+      head.id = 'exact-head';
+      section.append(head);
+      if (looked !== query) section.append(el('p', 'note', `No entry for ${query}. Showing ${looked}, the code before the slash.`));
+      if (exact.length > 1) section.append(el('p', 'note', 'These phones share the code or name, for example versions sold in different regions. Check the details against the listing.'));
+      const grid = el('div', 'readouts');
+      exact.forEach(e => grid.append(readout(e.device, byName ? null : e.device.models.find(m => codeKey(m) === key) ?? looked)));
+      section.append(grid);
+      results.append(section);
+    }
+
+    if (related.length) {
+      const section = el('section', 'block');
+      section.setAttribute('aria-labelledby', 'related-head');
+      const head = el('h2', 'block-head', exact.length ? 'Similar phones' : 'Possible matches');
+      head.id = 'related-head';
+      section.append(head);
+      section.append(el('p', 'note', exact.length
+        ? 'Select a name or a code for details.'
+        : `No model code or phone name is exactly ${query}. These contain it. Select a name or a code for details.`));
+      const list = el('ol', 'matches');
+      list.setAttribute('role', 'list');
+      related.slice(0, MAX_MATCHES).forEach(e => list.append(matchRow(e.device, key)));
+      section.append(list);
+      if (related.length > MAX_MATCHES) section.append(el('p', 'note', `Showing ${MAX_MATCHES} of ${related.length}. Type more of the code or name to narrow the list.`));
+      results.append(section);
+    }
+
+    if (!exact.length && !related.length) {
+      const section = el('section', 'block empty');
+      section.append(el('h2', 'block-head', 'Not in the list'));
+      section.append(el('p', 'note', `No phone in the lookup has the code or name ${query}. Check the code for typos and compare it with the phone’s settings. A missing entry does not mean the phone is fake or faulty: the lookup covers popular phones documented in the LineageOS Wiki, not every Android device.`));
+      results.append(section);
+    }
+
+    results.hidden = false;
+    const found = exact.length ? (byName ? 'Phone found' : 'Exact match found') : related.length ? `${related.length} possible ${related.length === 1 ? 'match' : 'matches'}` : 'No match';
+    status.textContent = `${found}. ${listStatus}`;
+  };
+
+  const setQuery = (query: string, history: 'push' | 'replace' | 'none') => {
+    input.value = query;
+    render(query);
+    if (history === 'none') return;
+    const url = new URL(location.href);
+    if (query.trim()) url.searchParams.set('q', query.trim());
+    else url.searchParams.delete('q');
+    window.history[history === 'push' ? 'pushState' : 'replaceState'](null, '', url);
+  };
+
+  let timer = 0;
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(() => setQuery(input.value, 'replace'), 160);
+  });
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    clearTimeout(timer);
+    setQuery(input.value, 'push');
+    results.querySelector('h2')?.scrollIntoView({ block: 'nearest' });
+  });
+  // Name and code links search in place instead of reloading the page.
+  root.addEventListener('click', event => {
+    const link = (event.target as Element).closest<HTMLAnchorElement>('a[data-code]');
+    if (!link || event.metaKey || event.ctrlKey || event.shiftKey || !entries) return;
+    event.preventDefault();
+    setQuery(link.dataset.code!, 'push');
+    input.focus({ preventScroll: true });
+    form.scrollIntoView({ block: 'nearest' });
+  });
+  addEventListener('popstate', () => setQuery(new URL(location.href).searchParams.get('q') ?? '', 'none'));
+
+  const load = async () => {
+    status.textContent = 'Loading the device list.';
+    root.classList.add('is-loading');
+    try {
+      const response = await fetch('/model-lookup/devices.json');
+      if (!response.ok) throw new Error(String(response.status));
+      const list: LookupList = await response.json();
+      entries = list.devices.map(device => ({
+        device,
+        codes: new Set(device.models.map(codeKey)),
+        nameKey: nameKey(device.name),
+        fullKey: nameKey(fullName(device)),
+        codename: codeKey(device.codename),
+        text: words(`${device.vendor} ${device.name} ${device.models.join(' ')}`).join(' '),
+      }));
+      root.classList.remove('is-loading');
+      setQuery(new URL(location.href).searchParams.get('q') ?? input.value, 'none');
+    } catch {
+      root.classList.remove('is-loading');
+      status.textContent = 'The device list could not be loaded. Check the connection and reload the page.';
+    }
+  };
+  load();
+</script>
+
+<style is:global>
+  .lookup { max-width: 920px; }
+
+  .search-label {
+    display: block;
+    margin-bottom: 10px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .search-row { display: flex; gap: 0; }
+  .search-row input {
+    flex: 1;
+    min-width: 0;
+    min-height: 64px;
+    padding: 0 20px;
+    border: 3px solid var(--edge);
+    border-right: 0;
+    border-radius: 0;
+    background: var(--field);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: clamp(18px, 2vw, 24px);
+    letter-spacing: .02em;
+    appearance: none;
+  }
+  .search-row input::placeholder { color: #8A8676; }
+  /* No browser clear button: it does not fit the field's style. */
+  .search-row input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+  /* Focus shows as a lighter field instead of the orange outline used elsewhere. */
+  .search-row input:focus { outline: none; background: var(--field-focus); }
+  .search-row .action-button { min-height: 64px; padding: 0 28px; }
+
+  .examples { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin: 14px 0 0; font-size: 14px; color: var(--ink-2); }
+  .examples span { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .examples a { font-family: var(--mono); font-size: 13px; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+  .examples a:hover { color: var(--action); }
+
+  .source { margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--rule); }
+  .status {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .is-loading .status::after { content: ''; display: inline-block; width: 7px; height: 7px; margin-left: 10px; background: var(--action); animation: blink 900ms steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .is-loading .status::after { animation: none; } }
+  .noscript { margin-top: 18px; padding: 16px 20px; background: var(--panel); font-size: 15px; }
+
+  .results { margin-top: clamp(28px, 3.4vw, 44px); }
+  .block + .block { margin-top: clamp(32px, 4vw, 52px); }
+  .block-head { font-size: clamp(20px, 2vw, 26px); font-weight: 500; letter-spacing: -.03em; line-height: 1.2; }
+  .note { margin-top: 10px; max-width: 64ch; font-size: 15px; line-height: 1.6; color: var(--ink-2); }
+  .empty { padding: 22px 24px 24px; background: var(--panel); }
+  .empty .note { margin-top: 10px; }
+
+  /* Exact match: dark readout panels, like the app's instrument window. */
+  .readouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; margin-top: 18px; }
+  .readout { padding: 22px 24px 24px; background: var(--window-bg); color: var(--window-text); border: 3px solid var(--edge); }
+  .readout-tag { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--window-dim); }
+  .readout-code { margin-top: 4px; font-family: var(--mono); font-size: 15px; letter-spacing: .04em; color: var(--window-text); }
+  .readout-name { margin: 18px 0 0; font-size: clamp(28px, 3.2vw, 42px); font-weight: 500; letter-spacing: -.04em; line-height: 1.05; text-wrap: balance; }
+  .readout-facts { margin-top: 20px; border-top: 1px solid #34372A; }
+  .readout-facts > div { display: flex; justify-content: space-between; gap: 18px; padding: 10px 0; border-bottom: 1px solid #34372A; }
+  .readout-facts dt { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--window-dim); padding-top: 3px; }
+  .readout-facts dd { margin: 0; font-size: 14.5px; text-align: right; overflow-wrap: anywhere; }
+  .readout-facts dd span { display: block; }
+  .match-link { text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 4px; text-decoration-thickness: 1px; }
+  .match-link:hover { color: var(--action); text-decoration-color: currentColor; }
+  .readout-source { margin-top: 16px; font-size: 13px; line-height: 1.55; color: var(--window-dim); }
+  .readout-source a { color: var(--window-text); text-decoration: underline; text-underline-offset: 3px; }
+
+  .info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(32px, 5vw, 72px); margin-top: clamp(48px, 6vw, 84px); }
+  .info .prose h2 { margin-top: 0; }
+
+  @media (max-width: 900px) {
+    .info { grid-template-columns: minmax(0, 1fr); }
+    .info .prose + .prose { margin-top: 2.2em; }
+  }
+  @media (max-width: 620px) {
+    .search-row { flex-direction: column; }
+    .search-row input { border-right: 3px solid var(--edge); border-bottom: 0; min-height: 58px; padding: 0 16px; }
+    .search-row .action-button { justify-content: center; min-height: 54px; }
+    .readout { padding: 18px 18px 20px; }
+  }
+</style>

@@ -1,0 +1,37 @@
+/* Shared by the model lookup page and the maker directory pages. */
+
+/* Possible matches: one row per name, its codes on the right. */
+.matches { list-style: none; margin: 14px 0 0; padding: 0; border-top: 2px solid var(--edge); }
+.match { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 8px 28px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+.match-name { font-size: 17px; font-weight: 500; letter-spacing: -.015em; line-height: 1.3; }
+.match-spec { margin-top: 4px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.match-brand { display: flex; flex-wrap: wrap; gap: 0 14px; }
+.match-brand { margin-top: 2px; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+
+/* Model codes as small tags. */
+.match-codes, .codes { display: flex; flex-wrap: wrap; gap: 6px; }
+.code {
+  display: inline-block;
+  padding: 3px 8px;
+  background: var(--panel);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: .02em;
+  line-height: 1.5;
+  color: var(--ink);
+}
+a.code:hover { background: var(--edge); color: var(--bg); }
+.code.is-current { background: var(--edge); color: var(--bg); }
+
+.makers { margin-top: clamp(44px, 5vw, 70px); }
+.makers h2 { font-size: clamp(22px, 2.2vw, 30px); font-weight: 500; letter-spacing: -.03em; line-height: 1.22; }
+.maker-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); column-gap: 28px; border-top: 2px solid var(--edge); }
+.maker-list a { display: block; padding: 12px 0; border-bottom: 1px solid var(--rule); font-size: 15.5px; }
+.maker-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+.credit { margin-top: 26px; max-width: 72ch; font-size: 13px; line-height: 1.6; color: var(--ink-3); }
+.credit a { text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 620px) {
+  .match { grid-template-columns: minmax(0, 1fr); }
+}

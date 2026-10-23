@@ -64,6 +64,10 @@ if (existsSync("scripts/inline-script-csp.mjs")) {
     assert.ok(!result.includes(createHash("sha256").update("window.untrusted = true;").digest("base64")));
     assert.equal(hashInlineScripts(result), result, "hashing is idempotent");
     assert.throws(() => hashInlineScripts(body), /security.csp/);
+    assert.throws(() => hashInlineScripts(head + '<script data-csp-hash src="/app.js"></script>'), /requires an inline script/);
+    for (const unsafeSource of ["'unsafe-inline'", "'unsafe-eval'"]) {
+      assert.throws(() => hashInlineScripts(head.replace("script-src 'self'", `script-src ${unsafeSource}`) + body), /restrictive script-src/);
+    }
     const redirect = '<!doctype html><meta http-equiv="refresh" content="0;url=/tools/"><title>Redirect</title>';
     assert.match(hashInlineScripts(redirect), /default-src 'none'; script-src 'none'/);
   });

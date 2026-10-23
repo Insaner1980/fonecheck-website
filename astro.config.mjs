@@ -1,5 +1,6 @@
 import { defineConfig, fontProviders } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import inlineScriptCsp from './scripts/inline-script-csp.mjs';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +26,18 @@ const lastmodFor = path => {
 
 export default defineConfig({
   site: 'https://fonecheck.app',
+  security: {
+    csp: {
+      directives: [
+        "default-src 'self'",
+        "connect-src 'self' https://cloudflareinsights.com",
+        "frame-src 'none'",
+        "object-src 'none'",
+      ],
+      scriptDirective: { resources: ["'self'", 'https://static.cloudflareinsights.com'] },
+      styleDirective: { resources: ["'self'", "'unsafe-inline'"] },
+    },
+  },
   trailingSlash: 'always',
   integrations: [sitemap({
     // /privacy/ only forwards to the shared Finnvek privacy policy.
@@ -34,7 +47,7 @@ export default defineConfig({
       if (date) item.lastmod = date;
       return item;
     },
-  })],
+  }), inlineScriptCsp()],
   fonts: [
     {
       provider: fontProviders.fontsource(),

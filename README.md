@@ -4,7 +4,7 @@ English pre-release marketing site for fonecheck, built with Astro. Static HTML,
 
 ## Local use
 
-Requires Node.js 22.12 or later; built locally with Node.js 24.
+Requires Node.js 22.23.4+, 24.22.1+, or 26.12.1+ within the release lines allowed by `package.json`; built locally with Node.js 24.22.1.
 
 ```sh
 npm ci
@@ -14,6 +14,7 @@ npm run dev
 ```sh
 npm run check
 npm run build
+node --test scripts/security-csp.test.mjs
 npm run preview
 ```
 
